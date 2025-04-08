@@ -34,6 +34,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.frontproject.ui.components.screens.BarCodeScreen
+import com.example.frontproject.ui.components.screens.GraphicsScreen
+import com.example.frontproject.ui.components.screens.HomeScreen
+import com.example.frontproject.ui.components.screens.ProfileScreen
+import com.example.frontproject.ui.components.screens.SearchScreen
 import com.example.frontproject.ui.theme.FrontProjectTheme
 
 class MainActivity : ComponentActivity() {
@@ -113,7 +118,7 @@ fun BottomNavigationBar(navController: NavHostController) {
             Constants.BottomNavigationItems.forEachIndexed { index, navItem ->
                 if (index == centerItemIndex) {
                     // Пустое место для центральной кнопки
-                    // Нужно так так навбар обрезает содержимое по своему размеру
+                    // Нужно так как навбар обрезает содержимое по своему размеру
                     // по хорошему надо наверное переписать на более адекватное решение
                     NavigationBarItem(
                         selected = currentRoute == navItem.route,
