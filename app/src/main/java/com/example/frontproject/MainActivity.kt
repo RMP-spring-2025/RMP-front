@@ -35,7 +35,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.frontproject.ui.components.screens.BarCodeScreen
-import com.example.frontproject.ui.components.screens.GraphicsScreen
+import com.example.frontproject.ui.components.screens.CaloriesScreen
 import com.example.frontproject.ui.components.screens.HomeScreen
 import com.example.frontproject.ui.components.screens.ProfileScreen
 import com.example.frontproject.ui.components.screens.SearchScreen
@@ -85,7 +85,7 @@ fun NavHostContainer(
             }
 
             composable("graphics") {
-                GraphicsScreen()
+                CaloriesScreen()
             }
 
             composable("search") {
