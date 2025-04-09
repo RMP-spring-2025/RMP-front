@@ -61,6 +61,23 @@ dependencies {
     // JSON serialization library, works with the Kotlin serialization plugin
     implementation(libs.kotlinx.serialization.json)
 
+    // camera dependencies
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    // If you want to additionally use the CameraX Lifecycle library
+    implementation(libs.androidx.camera.lifecycle)
+    // If you want to additionally use the CameraX VideoCapture library
+    implementation(libs.androidx.camera.video)
+    // If you want to additionally use the CameraX View class
+    implementation(libs.androidx.camera.view)
+    // If you want to additionally add CameraX ML Kit Vision Integration
+    implementation(libs.androidx.camera.mlkit.vision)
+    // If you want to additionally use the CameraX Extensions library
+    implementation(libs.androidx.camera.extensions)
+
+    // ML Kit Barcode Scanning
+    implementation(libs.play.services.mlkit.barcode.scanning)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
