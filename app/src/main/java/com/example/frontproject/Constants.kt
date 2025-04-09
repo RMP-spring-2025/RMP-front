@@ -29,7 +29,7 @@ object Constants {
         // Profile screen
         BottomNavigationItem(
             label = "Profile",
-            icon = R.drawable.profile,
+            icon = R.drawable.icon_profile_menu,
             route = "profile"
         )
     )

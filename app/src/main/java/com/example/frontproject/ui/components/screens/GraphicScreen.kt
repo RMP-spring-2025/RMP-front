@@ -26,7 +26,7 @@ fun GraphicsScreen() {
     ) {
         // Icon on the screen
         Icon(
-            painterResource(R.drawable.icon_graphic),
+            painterResource(R.drawable.activity),
             contentDescription = "home",
             modifier = Modifier.size(26.dp),
             tint = Color(0xff986ef2)

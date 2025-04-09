@@ -26,7 +26,7 @@ fun BarCodeScreen() {
     ) {
         // Icon on the screen
         Icon(
-            painterResource(R.drawable.icon_camera),
+            painterResource(R.drawable.camera),
             contentDescription = "home",
             modifier = Modifier.size(26.dp),
             tint = Color(0xff986ef2)
