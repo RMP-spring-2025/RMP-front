@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,6 +38,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.frontproject.ui.components.screens.BarCodeScreen
 import com.example.frontproject.ui.components.screens.CaloriesScreen
+import com.example.frontproject.ui.components.screens.GraphicsScreen
 import com.example.frontproject.ui.components.screens.HomeScreen
 import com.example.frontproject.ui.components.screens.ProfileScreen
 import com.example.frontproject.ui.components.screens.SearchScreen
@@ -81,11 +84,41 @@ fun NavHostContainer(
         modifier = Modifier.padding(paddingValues = padding),
         builder = {
             composable("home") {
-                HomeScreen()
+                HomeScreen(navController)
+            }
+
+            composable(
+                route = "calories",
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(durationMillis = 500)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(durationMillis = 500)
+                    )
+                },
+                popEnterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(durationMillis = 500)
+                    )
+                },
+                popExitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(durationMillis = 500)
+                    )
+                }
+            ) {
+                CaloriesScreen(navController)
             }
 
             composable("graphics") {
-                CaloriesScreen()
+                GraphicsScreen()
             }
 
             composable("search") {
@@ -97,7 +130,7 @@ fun NavHostContainer(
             }
 
             composable("profile") {
-                ProfileScreen()
+                ProfileScreen(navController)
             }
         }
     )

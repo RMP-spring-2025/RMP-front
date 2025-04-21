@@ -25,12 +25,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.frontproject.R
 import com.example.frontproject.ui.components.common.ScreenHeader
 
 @Composable
-@Preview
-fun ProfileScreen() {
+fun ProfileScreen(navController: NavController) {
     val primaryColor = Color(0xff986ef2)
     var notificationsEnabled by remember { mutableStateOf(true) }
     val scrollState = rememberScrollState()
@@ -43,7 +43,9 @@ fun ProfileScreen() {
         // Header
         ScreenHeader(
             title = "Profile",
-            onBackClick = { /* TODO: Handle back click */ },
+            onBackClick = {
+                navController.popBackStack() // ➡️ Возвращаемся назад по стеку
+            },
         )
 
         Column(
