@@ -14,6 +14,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.frontproject.MyApp
 import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.ui.components.calories.DateSelector
 import com.example.frontproject.ui.components.calories.DailyCaloriesSummary
@@ -23,8 +25,7 @@ import com.example.frontproject.ui.components.common.ScreenHeader
 import com.example.frontproject.ui.viewmodel.CaloriesViewModel
 
 @Composable
-@Preview
-fun CaloriesScreen() {
+fun CaloriesScreen(navController: NavController) {
     val viewModel = viewModel<CaloriesViewModel>()
     val selectedDate = viewModel.selectedDate.collectAsState().value
     val currentMonth = viewModel.currentMonth.collectAsState().value
@@ -37,7 +38,7 @@ fun CaloriesScreen() {
     ) {
         ScreenHeader(
             title = "Калории",
-            onBackClick = { /* Обработка нажатия кнопки назад */ },
+            onBackClick = { navController.popBackStack() },
         )
 
         MonthSelector(
@@ -104,4 +105,10 @@ fun CaloriesScreen() {
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun CaloriesPreview() {
+    MyApp()
 }
