@@ -78,6 +78,9 @@ dependencies {
     // ML Kit Barcode Scanning
     implementation(libs.play.services.mlkit.barcode.scanning)
 
+    implementation(libs.retrofit2)
+    implementation(libs.retrofit2.converter.gson)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

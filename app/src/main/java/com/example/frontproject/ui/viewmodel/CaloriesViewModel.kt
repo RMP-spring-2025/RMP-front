@@ -51,8 +51,11 @@ class CaloriesViewModel : ViewModel() {
             try {
                 _dayMeals.value = ResourceState.Loading
                 val formattedDate = selectedDate.value.format(DateTimeFormatter.ISO_DATE)
-                val result = repository.getMealsByDay(formattedDate)
-                _dayMeals.value = ResourceState.Success(result)
+
+                // Используем formattedDate вместо date и обновляем _dayMeals вместо _uiState
+                repository.getMealsByDay(formattedDate).collect { state ->
+                    _dayMeals.value = state
+                }
             } catch (e: Exception) {
                 _dayMeals.value = ResourceState.Error(e.message ?: "Неизвестная ошибка")
             }
