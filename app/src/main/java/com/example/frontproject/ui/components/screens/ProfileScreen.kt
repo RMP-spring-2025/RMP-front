@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -197,10 +196,12 @@ fun ProfileScreen(navController: NavController) {
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
 
-                    LinkItem("Personal Data", R.drawable.icon_profile)
-                    LinkItem("Achievements", R.drawable.icon_achievement)
-                    LinkItem("Activity History", R.drawable.icon_activity)
-                    LinkItem("Workout Progress", R.drawable.icon_workout)
+                    LinkItem("Personal Data", R.drawable.icon_profile) {}
+                    LinkItem("Achievements", R.drawable.icon_achievement) {}
+                    LinkItem("Activity History", R.drawable.icon_activity) {}
+                    LinkItem("Workout Progress", R.drawable.icon_workout) {
+                        navController.navigate("settings") // Переход на экран настроек
+                    }
                 }
             }
 
@@ -275,9 +276,11 @@ fun ProfileScreen(navController: NavController) {
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
 
-                    LinkItem("Contact Us", R.drawable.icon_message)
-                    LinkItem("Privacy Policy", R.drawable.icon_privacy)
-                    LinkItem("Settings", R.drawable.icon_setting)
+                    LinkItem("Contact Us", R.drawable.icon_message) {}
+                    LinkItem("Privacy Policy", R.drawable.icon_privacy) {}
+                    LinkItem("Settings", R.drawable.icon_setting) {
+                        navController.navigate("settings") // Переход на экран настроек
+                    }
                 }
             }
         }
@@ -285,11 +288,11 @@ fun ProfileScreen(navController: NavController) {
 }
 
 @Composable
-fun LinkItem(title: String, icon: Int? = null) {
+fun LinkItem(title: String, icon: Int? = null, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Действие при нажатии */ }
+            .clickable (onClick = onClick)
             .padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

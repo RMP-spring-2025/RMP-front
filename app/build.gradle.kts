@@ -41,7 +41,6 @@ android {
 }
 
 dependencies {
-    val navVersion = "2.8.9"
 
     implementation(libs.androidx.material)
 
@@ -60,6 +59,17 @@ dependencies {
 
     // JSON serialization library, works with the Kotlin serialization plugin
     implementation(libs.kotlinx.serialization.json)
+
+    // Retrofit for network requests
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.converter.scalars)
+    implementation(libs.okhttp)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.logging.interceptor)
+
 
     // camera dependencies
     implementation(libs.androidx.camera.core)

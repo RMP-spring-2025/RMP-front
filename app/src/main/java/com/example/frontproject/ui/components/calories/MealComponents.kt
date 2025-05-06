@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.frontproject.data.model.DayMeals
+import com.example.frontproject.data.model.GroupedMeals
 import com.example.frontproject.data.model.Meal
 
 @Composable
@@ -85,8 +85,6 @@ fun MealItem(meal: Meal) {
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Плейсхолдер для изображения блюда
-        // Заменить на AsyncImage или Image с загрузкой изображений из API.
         Box(
             modifier = Modifier
                 .size(60.dp)
@@ -120,6 +118,8 @@ fun MealItem(meal: Meal) {
                 NutrientBadge("Ж: ${meal.fats}г", Color(0xFFFFB74D))
                 Spacer(modifier = Modifier.width(8.dp))
                 NutrientBadge("У: ${meal.carbs}г", Color(0xFF81C784))
+                Spacer(modifier = Modifier.width(8.dp))
+                NutrientBadge("Масса: ${meal.massConsumed}г", Color(0xFF9575CD))
             }
         }
     }
@@ -145,30 +145,48 @@ fun NutrientBadge(text: String, color: Color) {
 }
 
 @Composable
-fun DailyCaloriesSummary(meals: DayMeals) {
-    val totalCalories = meals.breakfast.sumOf { it.calories } +
-            meals.lunch.sumOf { it.calories } +
-            meals.snacks.sumOf { it.calories } +
-            meals.dinner.sumOf { it.calories }
-
+fun DailyMealsSummary(groupedMeals: GroupedMeals) {
+    // Рассчитываем суммарные значения
+    val totalCalories = groupedMeals.breakfast.sumOf { it.calories } +
+            groupedMeals.lunch.sumOf { it.calories } +
+            groupedMeals.snacks.sumOf { it.calories } +
+            groupedMeals.dinner.sumOf { it.calories }
+    val totalCarbs = groupedMeals.breakfast.sumOf { it.carbs } +
+            groupedMeals.lunch.sumOf { it.carbs } +
+            groupedMeals.snacks.sumOf { it.carbs } +
+            groupedMeals.dinner.sumOf { it.carbs }
+    val totalFats = groupedMeals.breakfast.sumOf { it.fats } +
+            groupedMeals.lunch.sumOf { it.fats } +
+            groupedMeals.snacks.sumOf { it.fats } +
+            groupedMeals.dinner.sumOf { it.fats }
+    val totalProteins = groupedMeals.breakfast.sumOf { it.proteins } +
+            groupedMeals.lunch.sumOf { it.proteins } +
+            groupedMeals.snacks.sumOf { it.proteins } +
+            groupedMeals.dinner.sumOf { it.proteins }
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Всего калорий за день",
-            fontSize = 16.sp,
-            color = Color.Gray
+            text = "Итого за день",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF333333)
         )
 
-        Text(
-            text = "$totalCalories ккал",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF986ef2)
-        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            NutrientBadge("Калории: $totalCalories ккал", Color(0xFF9575CD))
+            NutrientBadge("Б: $totalProteins г", Color(0xFF64B5F6))
+            NutrientBadge("Ж: $totalFats г", Color(0xFFFFB74D))
+            NutrientBadge("У: $totalCarbs г", Color(0xFF81C784))
+        }
     }
 }
 

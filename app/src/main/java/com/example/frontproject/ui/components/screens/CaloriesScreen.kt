@@ -9,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -16,20 +17,27 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontproject.MyApp
+import com.example.frontproject.RmpApplication
 import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.ui.components.calories.DateSelector
-import com.example.frontproject.ui.components.calories.DailyCaloriesSummary
+import com.example.frontproject.ui.components.calories.DailyMealsSummary
 import com.example.frontproject.ui.components.calories.MealSection
 import com.example.frontproject.ui.components.calories.MonthSelector
 import com.example.frontproject.ui.components.common.ScreenHeader
 import com.example.frontproject.ui.viewmodel.CaloriesViewModel
 
 @Composable
-fun CaloriesScreen(navController: NavController) {
-    val viewModel = viewModel<CaloriesViewModel>()
+fun CaloriesScreen(
+    navController: NavController,
+    viewModel: CaloriesViewModel = viewModel(
+        factory = CaloriesViewModel.provideFactory(
+            (LocalContext.current.applicationContext as RmpApplication).appContainer.mealsRepository
+        )
+    )
+) {
     val selectedDate = viewModel.selectedDate.collectAsState().value
     val currentMonth = viewModel.currentMonth.collectAsState().value
-    val dayMealsState = viewModel.dayMeals.collectAsState().value
+    val mealsState = viewModel.groupedMealsState.collectAsState().value
 
     Column(
         modifier = Modifier
@@ -52,7 +60,7 @@ fun CaloriesScreen(navController: NavController) {
             onDateSelected = { viewModel.selectDate(it) }
         )
 
-        when (dayMealsState) {
+        when (mealsState) {
             is ResourceState.Loading -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -62,20 +70,21 @@ fun CaloriesScreen(navController: NavController) {
                 }
             }
             is ResourceState.Success -> {
-                val meals = dayMealsState.data
+                val groupedMealsData = mealsState.data
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     item {
-                        MealSection("Завтрак", meals.breakfast)
+                        // Передаем соответствующие списки в MealSection
+                        MealSection("Завтрак", groupedMealsData.breakfast)
                         Spacer(modifier = Modifier.height(16.dp))
-                        MealSection("Обед", meals.lunch)
+                        MealSection("Обед", groupedMealsData.lunch)
                         Spacer(modifier = Modifier.height(16.dp))
-                        MealSection("Перекусы", meals.snacks)
+                        MealSection("Перекусы", groupedMealsData.snacks)
                         Spacer(modifier = Modifier.height(16.dp))
-                        MealSection("Ужин", meals.dinner)
+                        MealSection("Ужин", groupedMealsData.dinner)
                         Spacer(modifier = Modifier.height(24.dp))
-                        DailyCaloriesSummary(meals)
+                        DailyMealsSummary(groupedMealsData)
                     }
                 }
             }
@@ -86,7 +95,7 @@ fun CaloriesScreen(navController: NavController) {
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "Ошибка загрузки данных",
+                            text = mealsState.message,
                             color = Color.Red,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium

@@ -42,6 +42,7 @@ import com.example.frontproject.ui.components.screens.GraphicsScreen
 import com.example.frontproject.ui.components.screens.HomeScreen
 import com.example.frontproject.ui.components.screens.ProfileScreen
 import com.example.frontproject.ui.components.screens.SearchScreen
+import com.example.frontproject.ui.components.screens.SettingsScreen
 import com.example.frontproject.ui.theme.FrontProjectTheme
 
 class MainActivity : ComponentActivity() {
@@ -122,15 +123,19 @@ fun NavHostContainer(
             }
 
             composable("search") {
-                SearchScreen()
+                BarCodeScreen(navController)
             }
 
             composable("barCode") {
-                BarCodeScreen()
+                SearchScreen()
             }
 
             composable("profile") {
                 ProfileScreen(navController)
+            }
+
+            composable("settings") {
+                SettingsScreen(navController)
             }
         }
     )

@@ -3,6 +3,7 @@ package com.example.frontproject.ui.components.common
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets // Импортируйте WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,7 +29,6 @@ fun ScreenHeader(
     onBackClick: () -> Unit,
     actions: @Composable (RowScope.() -> Unit) = {}
 ) {
-    // experimental feature, mb rewrite by hands
     CenterAlignedTopAppBar(
         title = { Text(title, fontWeight = FontWeight.W700) },
         navigationIcon = {
@@ -52,6 +52,7 @@ fun ScreenHeader(
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.White
-        )
+        ),
+        windowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
     )
 }

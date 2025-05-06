@@ -1,61 +1,121 @@
 package com.example.frontproject.data.repository
 
-import com.example.frontproject.data.model.DayMeals
-import com.example.frontproject.data.model.Meal
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import android.util.Log
+import com.example.frontproject.api.ApiRequestExecutor
+import com.example.frontproject.api.ApiService
+import com.example.frontproject.data.model.AddProductRequest
+import com.example.frontproject.data.model.ConsumeProductRequest
+import com.example.frontproject.data.model.Product
+import com.example.frontproject.data.model.ProductsResponse
+import com.example.frontproject.domain.util.ResourceState
 
-class MealsRepository {
 
-    fun getMealsByDay(date: String): DayMeals {
-        // return api.getMealsByDay(date)
+class MealsRepository(
+    private val apiRequestExecutor: ApiRequestExecutor,
+    private val apiService: ApiService
+) {
 
-        val today = LocalDate.now()
-        // Mock data for demonstration purposes
-        val todayMeals = DayMeals(
-            date = today.format(DateTimeFormatter.ISO_DATE),
-            breakfast = listOf(
-                Meal("Омлет из нестоловой", 228, 14, 88, 0),
-                Meal("Цельнозерновой тост из нестоловой", 42, 52, 13, 37)
-            ),
-            lunch = listOf(
-                Meal("Куриный суп из нестоловой", 180, 15, 8, 12),
-                Meal("Салат с тунцом из нестоловой", 250, 22, 12, 8),
-                Meal("Гречка из нестоловой", 150, 5, 1, 30)
-            ),
-            snacks = listOf(
-                Meal("Хер с маслом", 1, 2, 3, 4),
-            ),
-            dinner = listOf(
-                Meal("Закончились идеи", 555, 123, 321, 228),
-            )
+    suspend fun getProductsByDateRange(from: String, to: String): ResourceState<ProductsResponse> {
+        Log.e(
+            "MealsRepository",
+            "getProductsByDateRange: from = $from, to = $to"
         )
-        val prevDayMeals = DayMeals(
-            date = today.minusDays(1).format(DateTimeFormatter.ISO_DATE),
-            breakfast = listOf(
-                Meal("Омлет с овощами", 220, 18, 15, 6),
-                Meal("Цельнозерновой тост", 120, 4, 2, 20)
-            ),
-            lunch = listOf(
-                Meal("Куриный суп", 180, 15, 8, 12),
-                Meal("Салат с тунцом", 250, 22, 12, 8),
-                Meal("Гречка", 150, 5, 1, 30)
-            ),
-            snacks = listOf(
-                Meal("Яблоко", 80, 0, 0, 20),
-                Meal("Греческий йогурт", 120, 12, 3, 5)
-            ),
-            dinner = listOf(
-                Meal("Лосось на гриле", 300, 28, 18, 0),
-                Meal("Печеные овощи", 120, 3, 4, 15)
-            )
+        return apiRequestExecutor.executeHeavyRequest(
+            initialCall = {
+                apiService.getProductsByDateRange(
+                    fromDate = from,
+                    toDate = to
+                )
+            },
+            pollingCall = { requestId -> apiService.getProductsByDateRangeResponse(requestId) }
         )
-        return if (date == today.format(DateTimeFormatter.ISO_DATE)) {
-            todayMeals
-        } else if (date == today.minusDays(1).format(DateTimeFormatter.ISO_DATE)) {
-            prevDayMeals
-        } else {
-            DayMeals(date, emptyList(), emptyList(), emptyList(), emptyList())
+    }
+
+    suspend fun addProduct(
+        product: Product
+    ): ResourceState<Unit> {
+        Log.e(
+            "MealsRepository",
+            "addProduct: product = $product"
+        )
+        val addProductRequest = AddProductRequest(
+            bcode = product.barcode,
+            name = product.name,
+            calories = product.calories,
+            B = product.proteins,
+            Z = product.fats,
+            U = product.carbs,
+            mass = product.mass,
+        )
+        val response = apiRequestExecutor.executeRequest {
+            apiService.addProduct(
+                productRequest = addProductRequest
+            )
+        }
+        return when (response) {
+            is ResourceState.Success -> {
+                Log.e("MealsRepository", "addProduct: success")
+                ResourceState.Success(Unit)
+            }
+
+            is ResourceState.Error -> {
+                Log.e("MealsRepository", "addProduct: error = ${response.message}")
+                ResourceState.Error(response.message)
+            }
+
+            ResourceState.Loading -> {
+                Log.e("MealsRepository", "addProduct: loading")
+                ResourceState.Loading
+            }
+        }
+    }
+
+    suspend fun getProductByBarcode(barcode: String): ResourceState<Product> {
+        return apiRequestExecutor.executeHeavyRequest(
+            initialCall = { apiService.getProductByBarcode(barcode) },
+            pollingCall = { apiService.getProductByBarcodeResponse(it) }
+        ).let { result ->
+            when (result) {
+                is ResourceState.Success -> {
+                    when (result.data.status) {
+                        "success" -> {
+                            val pd = result.data.data!!
+                            val product = Product(
+                                id = pd.productId,
+                                name = pd.name,
+                                barcode = barcode.toLongOrNull() ?: 0L,
+                                calories = pd.calories.toInt(),
+                                proteins = pd.proteins,
+                                fats = pd.fats,
+                                carbs = pd.carbs,
+                                mass = pd.mass.toInt()
+                            )
+                            ResourceState.Success(product)
+                        }
+
+                        "not_found" -> {
+                            ResourceState.Error(result.data.errorMessage ?: "Продукт не найден")
+                        }
+
+                        else -> ResourceState.Error("Неизвестный статус: ${result.data.status}")
+                    }
+                }
+
+                is ResourceState.Error -> ResourceState.Error(result.message)
+                ResourceState.Loading -> ResourceState.Loading
+            }
+        }
+    }
+
+    suspend fun consumeProduct(request: ConsumeProductRequest): ResourceState<Unit> {
+        return apiRequestExecutor.executeRequest {
+            apiService.consumeProduct(request)
+        }.let {
+            when (it) {
+                is ResourceState.Success -> ResourceState.Success(Unit)
+                is ResourceState.Error   -> ResourceState.Error(it.message)
+                ResourceState.Loading    -> ResourceState.Loading
+            }
         }
     }
 }
