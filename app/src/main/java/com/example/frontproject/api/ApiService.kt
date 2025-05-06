@@ -5,6 +5,8 @@ import com.example.frontproject.data.model.AuthRequest
 import com.example.frontproject.data.model.AuthResponse
 import com.example.frontproject.data.model.ConsumeProductRequest
 import com.example.frontproject.data.model.ConsumeProductResponse
+import com.example.frontproject.data.model.CreateUserProfileRequest
+import com.example.frontproject.data.model.CreateUserProfileResponse
 import com.example.frontproject.data.model.ProductResponseByBcode
 import com.example.frontproject.data.model.RequestIdResponse
 import retrofit2.Response
@@ -52,6 +54,13 @@ interface ApiService {
 
 
 
-    @POST("auth") // Укажите здесь ваш эндпоинт авторизации
+    @POST("auth")
     suspend fun login(@Body request: AuthRequest): Response<AuthResponse>
+
+    @POST("register")
+    suspend fun register(@Body request: AuthRequest): Response<AuthResponse>
+
+    @POST("user/create")
+    suspend fun createUserProfile(@Body request: CreateUserProfileRequest): Response<CreateUserProfileResponse>
+
 }

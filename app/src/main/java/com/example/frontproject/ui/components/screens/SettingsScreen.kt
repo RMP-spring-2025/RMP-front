@@ -3,12 +3,15 @@ package com.example.frontproject.ui.components.screens
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -17,6 +20,8 @@ import androidx.navigation.NavController
 import com.example.frontproject.RmpApplication
 import com.example.frontproject.ui.components.common.ScreenHeader
 import com.example.frontproject.ui.viewmodel.AuthState
+import com.example.frontproject.ui.viewmodel.CreateUserState
+import com.example.frontproject.ui.viewmodel.RegisterState
 import com.example.frontproject.ui.viewmodel.SaveState
 import com.example.frontproject.ui.viewmodel.SettingsViewModel
 import com.example.frontproject.ui.viewmodel.SettingsViewModelFactory
@@ -37,6 +42,13 @@ fun SettingsScreen(navController: NavController) {
     var textFieldValue by remember(currentBaseUrl) { mutableStateOf(TextFieldValue(currentBaseUrl)) }
     val saveState by settingsViewModel.saveState.collectAsState()
     val authState by settingsViewModel.authState.collectAsState()
+    val registerState by settingsViewModel.registerState.collectAsState()
+    val createUserState by settingsViewModel.createUserState.collectAsState()
+
+    var loginUsername by remember { mutableStateOf(TextFieldValue("")) }
+    var loginPassword by remember { mutableStateOf(TextFieldValue("")) }
+    var registerUsername by remember { mutableStateOf(TextFieldValue("")) }
+    var registerPassword by remember { mutableStateOf(TextFieldValue("")) }
 
     // Обработка сохранения URL
     LaunchedEffect(saveState) {
@@ -77,6 +89,44 @@ fun SettingsScreen(navController: NavController) {
         }
     }
 
+    LaunchedEffect(registerState) {
+        when (val state = registerState) {
+            is RegisterState.Success -> {
+                Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT).show()
+                settingsViewModel.resetRegisterState()
+            }
+
+            is RegisterState.Error -> {
+                Toast.makeText(context, "Ошибка регистрации: ${state.message}", Toast.LENGTH_LONG)
+                    .show()
+                settingsViewModel.resetRegisterState()
+            }
+
+            else -> Unit
+        }
+    }
+
+    LaunchedEffect(createUserState) {
+        when (val state = createUserState) {
+            is CreateUserState.Success -> {
+                Toast.makeText(context, "Пользователь создан!", Toast.LENGTH_SHORT).show()
+                settingsViewModel.resetCreateUserState()
+            }
+
+            is CreateUserState.Error -> {
+                Toast.makeText(
+                    context,
+                    "Ошибка создания пользователя: ${state.message}",
+                    Toast.LENGTH_LONG
+                )
+                    .show()
+                settingsViewModel.resetCreateUserState()
+            }
+
+            else -> Unit
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -90,6 +140,7 @@ fun SettingsScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState()) // Добавлено для прокрутки
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -133,19 +184,75 @@ fun SettingsScreen(navController: NavController) {
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(16.dp))
+
+
+            Text(
+                text = "Регистрация",
+                style = MaterialTheme.typography.titleMedium
+            )
+            OutlinedTextField(
+                value = registerUsername,
+                onValueChange = { registerUsername = it },
+                label = { Text("Имя пользователя для регистрации") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = registerPassword,
+                onValueChange = { registerPassword = it },
+                label = { Text("Пароль для регистрации") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation()
+            )
+            Button(
+                onClick = {
+                    settingsViewModel.registerUser(registerUsername.text, registerPassword.text)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = registerState !is RegisterState.Loading && authState !is AuthState.Loading
+            ) {
+                if (registerState is RegisterState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Зарегистрироваться")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Авторизация",
                 style = MaterialTheme.typography.titleMedium
             )
-
-            // Кнопка авторизации
+            OutlinedTextField(
+                value = loginUsername,
+                onValueChange = { loginUsername = it },
+                label = { Text("Имя пользователя для входа") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = loginPassword,
+                onValueChange = { loginPassword = it },
+                label = { Text("Пароль для входа") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation()
+            )
             Button(
                 onClick = {
-                    settingsViewModel.login("string", "string")
+                    settingsViewModel.login(loginUsername.text, loginPassword.text)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = authState !is AuthState.Loading
+                enabled = authState !is AuthState.Loading && registerState !is RegisterState.Loading
             ) {
                 if (authState is AuthState.Loading) {
                     CircularProgressIndicator(
@@ -153,9 +260,36 @@ fun SettingsScreen(navController: NavController) {
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Авторизоваться (string/string)")
+                    Text("Авторизоваться")
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Создание профиля пользователя (тест)",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Button(
+                onClick = {
+                    settingsViewModel.createUserProfile("string", 21, 185.5)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = createUserState !is CreateUserState.Loading
+            ) {
+                if (createUserState is CreateUserState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Создать пользователя (тест)")
+                }
+            }
+
+
             // Кнопка выхода
             Button(
                 onClick = {
@@ -164,14 +298,7 @@ fun SettingsScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 enabled = authState !is AuthState.Loading
             ) {
-                if (authState is AuthState.Loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text("Выйти")
-                }
+                Text("Выйти")
             }
         }
     }
