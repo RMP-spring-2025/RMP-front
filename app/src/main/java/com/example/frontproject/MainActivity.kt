@@ -36,14 +36,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.frontproject.ui.components.screens.AuthScreen
 import com.example.frontproject.ui.components.screens.BarCodeScreen
 import com.example.frontproject.ui.components.screens.CaloriesScreen
 import com.example.frontproject.ui.components.screens.GraphicsScreen
 import com.example.frontproject.ui.components.screens.HomeScreen
 import com.example.frontproject.ui.components.screens.ProfileScreen
+import com.example.frontproject.ui.components.screens.RegistrationScreen
 import com.example.frontproject.ui.components.screens.SearchScreen
 import com.example.frontproject.ui.components.screens.SettingsScreen
+import com.example.frontproject.ui.components.screens.SuccessRegistrationScreen
 import com.example.frontproject.ui.theme.FrontProjectTheme
+import com.example.myapplication.WelcomeScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,11 +85,49 @@ fun NavHostContainer(
 ) {
     NavHost(
         navController = navController,
-        startDestination = "home",
+        startDestination = "mainScreen",
         modifier = Modifier.padding(paddingValues = padding),
         builder = {
             composable("home") {
                 HomeScreen(navController)
+            }
+
+            composable("mainScreen") {
+                WelcomeScreen(
+                    onRegisterClick = {
+                        navController.navigate("register")
+                    },
+                    onLoginClick = {
+                        navController.navigate("authScreen")
+                    }
+                )
+            }
+            composable("register") {
+                RegistrationScreen(
+                    onRegisterClick = {
+                        navController.navigate("success")
+                    },
+                    onLoginClick = {
+                        navController.navigate("authScreen")
+                    }
+                )
+            }
+            composable("success") {
+                SuccessRegistrationScreen(
+                    onGoHomeClicked = {
+                        navController.navigate("home")
+                    }
+                )
+            }
+            composable("authScreen") {
+                AuthScreen(
+                    onRegisterClick = {
+                        navController.navigate("register")
+                    },
+                    onLoginClick = {
+                        navController.navigate("home")
+                    }
+                )
             }
 
             composable(
