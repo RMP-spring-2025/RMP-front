@@ -58,7 +58,7 @@ import com.example.frontproject.ui.viewmodel.CreateUserState
 import com.example.frontproject.ui.viewmodel.RegisterState
 import com.example.frontproject.ui.viewmodel.SettingsViewModel
 import com.example.frontproject.ui.viewmodel.SettingsViewModelFactory
-import com.example.myapplication.WelcomeScreen
+import com.example.frontproject.ui.components.screens.WelcomeScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -105,7 +105,8 @@ fun MyApp(modifier: Modifier = Modifier) {
         "search",
         "barCode",
         "profile",
-        "settings"
+        "settings",
+        "welcome"
     )
 
     Surface(color = Color.White) {
