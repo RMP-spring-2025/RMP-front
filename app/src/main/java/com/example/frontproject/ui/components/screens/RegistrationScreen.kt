@@ -51,21 +51,12 @@ fun RegistrationScreen(
             )
             Column(
                 modifier = Modifier
-                    .padding(top=24.dp, bottom = 60.dp),
+                    .padding(top=24.dp, bottom = 160.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 CustomOutlinedTextField(value = "",
-                    label = "Имя",
+                    label = "Логин",
                     icon = Icons.Default.Person
-                )
-                CustomOutlinedTextField(value = "",
-                    label = "Номер телефона",
-                    icon = Icons.Default.Phone
-                )
-                CustomOutlinedTextField(
-                    value = "",
-                    label = "Email",
-                    icon = Icons.Default.Email
                 )
                 CustomOutlinedTextField(
                     value = "",

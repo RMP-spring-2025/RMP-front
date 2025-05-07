@@ -47,7 +47,7 @@ fun AuthScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 CustomOutlinedTextField(value = "",
-                    label = "Имя",
+                    label = "Логин",
                     icon = Icons.Default.Person
                 )
                 CustomOutlinedTextField(
