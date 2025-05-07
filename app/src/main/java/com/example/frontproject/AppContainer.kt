@@ -5,6 +5,7 @@ import com.example.frontproject.api.ApiRequestExecutor
 import com.example.frontproject.api.ApiService
 import com.example.frontproject.api.AuthInterceptor
 import com.example.frontproject.api.TokenRefreshAuthenticator
+import com.example.frontproject.data.repository.CaloriesRepository
 import com.example.frontproject.data.repository.MealsRepository
 import com.example.frontproject.store.SettingsRepository
 import com.example.frontproject.store.TokenRepository
@@ -83,5 +84,9 @@ class AppContainer(context: Context) {
 
     val mealsRepository: MealsRepository by lazy {
         MealsRepository(apiRequestExecutor, apiService)
+    }
+
+    val caloriesRepository: CaloriesRepository by lazy {
+        CaloriesRepository(apiRequestExecutor, apiService)
     }
 }

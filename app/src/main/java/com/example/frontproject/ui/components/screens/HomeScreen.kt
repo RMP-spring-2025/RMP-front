@@ -31,6 +31,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +45,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -51,10 +54,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontproject.MyApp
 import com.example.frontproject.R
+import com.example.frontproject.RmpApplication
+import com.example.frontproject.data.repository.CaloriesRepository
+import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.ui.components.common.ProfileHeader
+import com.example.frontproject.ui.viewmodel.CaloriesTodayViewModel
 import java.util.*
 
 
@@ -92,12 +100,29 @@ fun HomeScreen(navController: NavController) {
 }
 
 @Composable
-fun DashboardScreen(navController: NavController) {
+fun DashboardScreen(
+    navController: NavController,
+    viewModel: CaloriesTodayViewModel = viewModel(
+        factory = CaloriesTodayViewModel.provideFactory(
+            (LocalContext.current.applicationContext as RmpApplication).appContainer.caloriesRepository
+        )
+    )
+) {
+    val caloriesBurned = when (val caloriesState = viewModel.caloriesState.collectAsState().value) {
+        is ResourceState.Success -> caloriesState.data
+        is ResourceState.Loading -> 0
+        is ResourceState.Error -> 0
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        CaloriesCard(caloriesBurned = 770, caloriesLeft = 230, navController)
+        CaloriesCard(
+            caloriesBurned = caloriesBurned,
+            caloriesLeft = 0,
+            navController
+        )
         /* TODO: Карточки сна/шагов */
 //        StepsCard(steps = 1543, stepsGoal = 10000)
     }

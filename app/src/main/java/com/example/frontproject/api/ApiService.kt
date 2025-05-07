@@ -3,6 +3,7 @@ package com.example.frontproject.api
 import com.example.frontproject.data.model.AddProductRequest
 import com.example.frontproject.data.model.AuthRequest
 import com.example.frontproject.data.model.AuthResponse
+import com.example.frontproject.data.model.CaloriesStatsResponse
 import com.example.frontproject.data.model.ConsumeProductRequest
 import com.example.frontproject.data.model.ConsumeProductResponse
 import com.example.frontproject.data.model.CreateUserProfileRequest
@@ -43,7 +44,6 @@ interface ApiService {
     @GET("heavy_response/{id}")
     suspend fun getProductsByDateRangeResponse(@Path("id") requestId: String): Response<ProductsResponse>
 
-
     @POST("products")
     suspend fun addProduct(@Body productRequest: AddProductRequest): Response<Unit> // Или Response<Void> если сервер ничего не возвращает в теле
 
@@ -51,8 +51,6 @@ interface ApiService {
     suspend fun consumeProduct(
         @Body request: ConsumeProductRequest
     ): Response<ConsumeProductResponse>
-
-
 
     @POST("auth")
     suspend fun login(@Body request: AuthRequest): Response<AuthResponse>
@@ -62,5 +60,14 @@ interface ApiService {
 
     @POST("user/create")
     suspend fun createUserProfile(@Body request: CreateUserProfileRequest): Response<CreateUserProfileResponse>
+
+    @GET("user/calories")
+    suspend fun getCaloriesForRange(
+        @Query("from") fromDate: String,
+        @Query("to") toDate: String
+    ): Response<RequestIdResponse>
+
+    @GET("heavy_response/{id}")
+    suspend fun getCaloriesResponse(@Path("id") requestId: String): Response<CaloriesStatsResponse>
 
 }
