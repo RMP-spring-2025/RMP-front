@@ -18,26 +18,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,8 +43,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -61,8 +51,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontproject.RmpApplication
 import com.example.frontproject.data.model.BarcodeUiState
-import com.example.frontproject.data.model.Product
 import com.example.frontproject.domain.util.ResourceState
+import com.example.frontproject.ui.components.barcode.AddProductDialog
+import com.example.frontproject.ui.components.barcode.ProductAddedView
+import com.example.frontproject.ui.components.barcode.ProductFoundView
+import com.example.frontproject.ui.components.barcode.ProductNotFoundView
 import com.example.frontproject.ui.viewmodel.BarCodeViewModel
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
@@ -74,8 +67,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
 
 @Composable
@@ -331,265 +322,6 @@ fun BarCodeScreen(
     }
 }
 
-
-// Вид для найденного продукта
-@Composable
-fun ProductFoundView(product: Product, onAddProduct: (String, String) -> Unit) {
-    var mass by remember { mutableStateOf("") }
-    val defaultTime = LocalDateTime.now()
-        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
-    var time by remember { mutableStateOf(defaultTime) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = product.name,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xff986ef2),
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = mass,
-            onValueChange = { mass = it },
-            label = { Text("Масса (г)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = time,
-            onValueChange = { time = it },
-            label = { Text("Время (yyyy-MM-dd'T'HH:mm:ss)") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(
-            onClick = { onAddProduct(mass, time) },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xff986ef2)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Добавить")
-        }
-    }
-}
-
-// Вид для ненайденного продукта
-@Composable
-fun ProductNotFoundView(onManualAdd: () -> Unit, onScanAgain: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Info,
-            contentDescription = null,
-            tint = Color(0xff986ef2),
-            modifier = Modifier.size(64.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Продукт не найден",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(
-            onClick = onManualAdd,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xff986ef2)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Добавить новый продукт")
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedButton(
-            onClick = onScanAgain,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Сканировать снова")
-        }
-    }
-}
-
-// Диалог добавления нового продукта
-@Composable
-fun AddProductDialog(
-    barcodeValue: String,
-    onDismiss: () -> Unit,
-    onProductAdd: (Product) -> Unit
-) {
-    var name by remember { mutableStateOf("") }
-    var barcode by remember { mutableStateOf(barcodeValue) }
-    var proteins by remember { mutableStateOf("") }
-    var fats by remember { mutableStateOf("") }
-    var carbs by remember { mutableStateOf("") }
-    var calories by remember { mutableStateOf("") }
-    var mass by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Добавление нового продукта") },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = barcode,
-                    onValueChange = { barcode = it },
-                    label = { Text("Штрих-код (опционально)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Название продукта*") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = calories,
-                    onValueChange = { calories = it },
-                    label = { Text("Калории*") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = proteins,
-                        onValueChange = { proteins = it },
-                        label = { Text("Белки (B)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 4.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = fats,
-                        onValueChange = { fats = it },
-                        label = { Text("Жиры (Ж)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 4.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = carbs,
-                    onValueChange = { carbs = it },
-                    label = { Text("Углеводы (У)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = mass,
-                    onValueChange = { mass = it },
-                    label = { Text("Масса (г, опционально)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val product = Product(
-                        id = 0, // ID будет присвоен на сервере
-                        name = name,
-                        barcode = barcode.toLongOrNull()
-                            ?: 0L, // 0L если штрих-код невалидный или пустой
-                        calories = calories.toIntOrNull() ?: 0,
-                        proteins = proteins.toFloatOrNull() ?: 0f,
-                        fats = fats.toFloatOrNull() ?: 0f,
-                        carbs = carbs.toFloatOrNull() ?: 0f,
-                        mass = mass.toIntOrNull() // mass может быть null
-                    )
-                    onProductAdd(product)
-                },
-                enabled = name.isNotBlank() && calories.isNotBlank()
-            ) {
-                Text("Добавить")
-            }
-        },
-        dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Отмена")
-            }
-        }
-    )
-}
-
-// Вид для успешно добавленного продукта
-@Composable
-fun ProductAddedView(onDone: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Check,
-            contentDescription = "Продукт добавлен",
-            tint = Color(0xff986ef2),
-            modifier = Modifier.size(64.dp)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Продукт успешно добавлен!",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(20.dp))
-        Button(
-            onClick = onDone,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xff986ef2)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Готово")
-        }
-    }
-}
 
 private var barcodeValueJob: Job? = null
 var lastBarcodeValue: String? = null

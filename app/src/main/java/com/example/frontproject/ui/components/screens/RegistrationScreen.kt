@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,12 +27,18 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.frontproject.ui.viewmodel.RegisterState
+import com.example.frontproject.ui.viewmodel.SettingsViewModel
 
 @Composable
 fun RegistrationScreen(
-    onRegisterClick: () -> Unit = {},
+    settingsViewModel: SettingsViewModel,
     onLoginClick: () -> Unit = {}
 ) {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    val registerState by settingsViewModel.registerState.collectAsState()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -54,19 +61,28 @@ fun RegistrationScreen(
                     .padding(top=24.dp, bottom = 160.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                CustomOutlinedTextField(value = "",
-                    label = "Логин",
-                    icon = Icons.Default.Person
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = { username = it },
+                    label = { Text("Логин") },
+                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    modifier = Modifier.fillMaxWidth()
                 )
-                CustomOutlinedTextField(
-                    value = "",
-                    label = "Пароль",
-                    icon = Icons.Default.Lock,
-                    isPassword = true,
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Пароль") },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
-            GradientButton(text = "Зарегистрироваться", onClick = {onRegisterClick()})
+            GradientButton(
+                text = "Зарегистрироваться",
+                onClick = { settingsViewModel.registerUser(username, password) }
+            )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -78,6 +94,14 @@ fun RegistrationScreen(
                     color = Color(0xFF9A5AFF),
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable { onLoginClick() }
+                )
+            }
+
+            if (registerState is RegisterState.Error) {
+                Text(
+                    text = (registerState as RegisterState.Error).message,
+                    color = Color.Red,
+                    modifier = Modifier.padding(top = 16.dp)
                 )
             }
         }
@@ -114,10 +138,4 @@ fun CustomOutlinedTextField(
         shape = RoundedCornerShape(15.dp),
         singleLine = true
     )
-}
-
-@Preview(showSystemUi = true)
-@Composable
-fun RegistrationScreenPreview() {
-    RegistrationScreen()
 }

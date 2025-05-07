@@ -22,15 +22,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -39,6 +44,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.frontproject.ui.components.screens.AuthScreen
 import com.example.frontproject.ui.components.screens.BarCodeScreen
 import com.example.frontproject.ui.components.screens.CaloriesScreen
+import com.example.frontproject.ui.components.screens.CreateProfileScreen
 import com.example.frontproject.ui.components.screens.GraphicsScreen
 import com.example.frontproject.ui.components.screens.HomeScreen
 import com.example.frontproject.ui.components.screens.ProfileScreen
@@ -47,6 +53,11 @@ import com.example.frontproject.ui.components.screens.SearchScreen
 import com.example.frontproject.ui.components.screens.SettingsScreen
 import com.example.frontproject.ui.components.screens.SuccessRegistrationScreen
 import com.example.frontproject.ui.theme.FrontProjectTheme
+import com.example.frontproject.ui.viewmodel.AuthState
+import com.example.frontproject.ui.viewmodel.CreateUserState
+import com.example.frontproject.ui.viewmodel.RegisterState
+import com.example.frontproject.ui.viewmodel.SettingsViewModel
+import com.example.frontproject.ui.viewmodel.SettingsViewModelFactory
 import com.example.myapplication.WelcomeScreen
 
 class MainActivity : ComponentActivity() {
@@ -64,15 +75,53 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val appContainer = (context.applicationContext as RmpApplication).appContainer
+
+    // Создаем ViewModel с помощью Factory
+    val settingsViewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModelFactory(
+            settingsRepository = appContainer.settingsRepository,
+            tokenRepository = appContainer.tokenRepository,
+            apiRequestExecutor = appContainer.apiRequestExecutor
+        )
+    )
+
+    // Определяем начальный маршрут на основе наличия токенов
+    val tokenRepository = appContainer.tokenRepository
+    val initialStartDestination = remember {
+        if (tokenRepository.getCurrentAccessToken().isNullOrEmpty()) {
+            "welcome"
+        } else {
+            "home" // Если токен есть, сразу на главный экран
+        }
+    }
+
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val showBottomBar = currentRoute in listOf(
+        "home",
+        "calories",
+        "graphics",
+        "search",
+        "barCode",
+        "profile",
+        "settings"
+    )
+
     Surface(color = Color.White) {
-        // Scaffold Component
         Scaffold(
-            // Bottom navigation
             bottomBar = {
-                BottomNavigationBar(navController = navController)
-            }, content = { padding ->
-                // Nav host: where screens are placed
-                NavHostContainer(navController = navController, padding = padding)
+                if (showBottomBar) {
+                    BottomNavigationBar(navController = navController)
+                }
+            },
+            content = { padding ->
+                NavHostContainer(
+                    navController = navController,
+                    padding = padding,
+                    settingsViewModel = settingsViewModel,
+                    startDestination = initialStartDestination // Передаем начальный маршрут
+                )
             }
         )
     }
@@ -81,55 +130,103 @@ fun MyApp(modifier: Modifier = Modifier) {
 @Composable
 fun NavHostContainer(
     navController: NavHostController,
-    padding: PaddingValues
+    padding: PaddingValues,
+    settingsViewModel: SettingsViewModel,
+    startDestination: String // Принимаем начальный маршрут
 ) {
+    // Отслеживаем состояния авторизации для навигации
+    val registerState by settingsViewModel.registerState.collectAsState()
+    val createUserState by settingsViewModel.createUserState.collectAsState()
+    val authState by settingsViewModel.authState.collectAsState()
+
+    // Обрабатываем навигацию после успешной регистрации
+    LaunchedEffect(registerState) {
+        if (registerState is RegisterState.Success) {
+            navController.navigate("create_profile") {
+                // Очищаем бэкстек до welcome, чтобы пользователь не мог вернуться на экраны регистрации
+                popUpTo("welcome") { inclusive = true }
+            }
+            settingsViewModel.resetRegisterState()
+        }
+    }
+
+    // Обрабатываем навигацию после создания профиля
+    LaunchedEffect(createUserState) {
+        if (createUserState is CreateUserState.Success) {
+            navController.navigate("success"){
+                popUpTo("welcome") { inclusive = true }
+            }
+            settingsViewModel.resetCreateUserState()
+        }
+    }
+
+    // Обрабатываем навигацию после входа
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success) {
+            navController.navigate("home") {
+                popUpTo("welcome") { inclusive = true } // Очищаем бэкстек до welcome
+            }
+            settingsViewModel.resetAuthState()
+        }
+    }
+
     NavHost(
         navController = navController,
-        startDestination = "mainScreen",
+        startDestination = startDestination, // Используем переданный начальный маршрут
         modifier = Modifier.padding(paddingValues = padding),
         builder = {
+            // Экран приветствия
+            composable("welcome") {
+                WelcomeScreen(
+                    onRegisterClick = { navController.navigate("register") },
+                    onLoginClick = { navController.navigate("login") }
+                )
+            }
+
+            // Экран регистрации
+            composable("register") {
+                RegistrationScreen(
+                    settingsViewModel = settingsViewModel,
+                    onLoginClick = { navController.navigate("login") }
+                )
+            }
+
+            // Экран создания профиля
+            composable("create_profile") {
+                CreateProfileScreen(
+                    settingsViewModel = settingsViewModel
+                )
+            }
+
+            // Экран успешной регистрации
+            composable("success") {
+                // Предполагаем, что имя пользователя можно получить из ViewModel или другого источника
+                val userName = remember {
+                    // Здесь можно добавить логику получения имени пользователя, если оно доступно
+                    // Например, из userProfileState во ViewModel
+                    "Пользователь"
+                }
+                SuccessRegistrationScreen(
+                    userName = userName,
+                    onGoHomeClicked = {
+                        navController.navigate("home") {
+                            popUpTo("welcome") { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // Экран авторизации
+            composable("login") {
+                AuthScreen(
+                    settingsViewModel = settingsViewModel,
+                    onRegisterClick = { navController.navigate("register") },
+                    // onLoginSuccess уже обрабатывается в LaunchedEffect(authState)
+                )
+            }
             composable("home") {
                 HomeScreen(navController)
             }
-
-            composable("mainScreen") {
-                WelcomeScreen(
-                    onRegisterClick = {
-                        navController.navigate("register")
-                    },
-                    onLoginClick = {
-                        navController.navigate("authScreen")
-                    }
-                )
-            }
-            composable("register") {
-                RegistrationScreen(
-                    onRegisterClick = {
-                        navController.navigate("success")
-                    },
-                    onLoginClick = {
-                        navController.navigate("authScreen")
-                    }
-                )
-            }
-            composable("success") {
-                SuccessRegistrationScreen(
-                    onGoHomeClicked = {
-                        navController.navigate("home")
-                    }
-                )
-            }
-            composable("authScreen") {
-                AuthScreen(
-                    onRegisterClick = {
-                        navController.navigate("register")
-                    },
-                    onLoginClick = {
-                        navController.navigate("home")
-                    }
-                )
-            }
-
             composable(
                 route = "calories",
                 enterTransition = {
