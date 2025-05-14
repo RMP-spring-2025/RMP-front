@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 sealed class SaveState {
     data object Idle : SaveState()
@@ -132,10 +134,17 @@ class SettingsViewModel(
         _registerState.value = RegisterState.Idle
     }
 
-    fun createUserProfile(username: String, age: Int, height: Double) {
+    fun createUserProfile(username: String, age: Int, height: Double, weight: Double, goal: String) {
         viewModelScope.launch {
             _createUserState.value = CreateUserState.Loading
-            val request = CreateUserProfileRequest(username, age, height)
+            val request = CreateUserProfileRequest(
+                username,
+                age,
+                height,
+                weight,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")),
+                goal
+            )
             when (val result = apiRequestExecutor.executeRequest { apiRequestExecutor.apiService.createUserProfile(request) }) {
                 is ResourceState.Success -> _createUserState.value = CreateUserState.Success
                 is ResourceState.Error -> _createUserState.value = CreateUserState.Error(result.message)

@@ -274,7 +274,7 @@ fun SettingsScreen(navController: NavController) {
             )
             Button(
                 onClick = {
-                    settingsViewModel.createUserProfile("string", 21, 185.5)
+//                    settingsViewModel.createUserProfile("string", 21, 185.5)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = createUserState !is CreateUserState.Loading

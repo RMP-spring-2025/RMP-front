@@ -189,13 +189,14 @@ fun CreateProfileScreen(
                 val age =
                     calculateAgeFromBirthDateString(birthDate) // Используем birthDate (ГГГГ-ММ-ДД)
                 val heightValue = height.toDoubleOrNull() ?: 0.0
-                // val weightValue = weight.toDoubleOrNull() ?: 0.0 // Вес не передается в createUserProfile
+                val weightValue = weight.toDoubleOrNull() ?: 0.0 // Вес не передается в createUserProfile
 
                 settingsViewModel.createUserProfile(
                     username = username,
                     age = age,
-                    height = heightValue
-                    // weight = weightValue // Если нужно будет передавать вес
+                    height = heightValue,
+                    weight = weightValue,
+                    goal = "gain weight"
                 )
             }
         )
