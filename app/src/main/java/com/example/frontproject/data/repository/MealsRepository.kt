@@ -113,8 +113,59 @@ class MealsRepository(
         }.let {
             when (it) {
                 is ResourceState.Success -> ResourceState.Success(Unit)
-                is ResourceState.Error   -> ResourceState.Error(it.message)
-                ResourceState.Loading    -> ResourceState.Loading
+                is ResourceState.Error -> ResourceState.Error(it.message)
+                ResourceState.Loading -> ResourceState.Loading
+            }
+        }
+    }
+
+    suspend fun getProductsByName(name: String): ResourceState<List<Product>> {
+        return apiRequestExecutor.executeHeavyRequest(
+            initialCall = { apiService.getProductsByName(name) },
+            pollingCall = { requestId -> apiService.getProductsByNameResponse(requestId) }
+        ).let { responseResult ->
+            when (responseResult) {
+                is ResourceState.Success -> {
+                    val responseDto = responseResult.data
+
+                    // Проверяем статус ответа
+                    if (responseDto.status == "not_found") {
+                        // Если продукты не найдены, возвращаем успешный результат с пустым списком
+                        Log.i(
+                            "MealsRepository",
+                            "getProductsByName: Products not found for name '$name' (status: not_found). Returning empty list. Message from server: ${responseDto.errorMessage}"
+                        )
+                        return@let ResourceState.Success(emptyList())
+                    }
+
+                    val productsDataContainer = responseDto.data
+                    val dtoList = productsDataContainer?.products
+
+                    if (dtoList != null) {
+                        val productList = dtoList.map { dto ->
+                            Product(
+                                id = dto.productId,
+                                name = dto.name,
+                                barcode = 0L,
+                                calories = dto.calories.toInt(),
+                                proteins = dto.protein.toFloat(),
+                                fats = dto.fat.toFloat(),
+                                carbs = dto.carbs.toFloat(),
+                                mass = dto.mass.toInt()
+                            )
+                        }
+                        ResourceState.Success(productList)
+                    } else {
+                        Log.w(
+                            "MealsRepository",
+                            "getProductsByName: Список продуктов null или контейнер данных null, и статус не был 'not_found'. Возвращаем пустой список."
+                        )
+                        ResourceState.Success(emptyList())
+                    }
+                }
+
+                is ResourceState.Error -> ResourceState.Error(responseResult.message)
+                is ResourceState.Loading -> ResourceState.Loading
             }
         }
     }

@@ -14,43 +14,32 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontproject.RmpApplication
 import com.example.frontproject.data.model.BarcodeUiState
+import com.example.frontproject.data.model.Product // Убедитесь, что импорт правильный
 import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.ui.components.barcode.AddProductDialog
 import com.example.frontproject.ui.components.barcode.ProductAddedView
@@ -62,12 +51,10 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
+
+// Глобальная переменная для последнего значения штрих-кода, если она все еще нужна где-то
+var lastBarcodeValue: String? = null
 
 @Composable
 fun BarCodeScreen(
@@ -79,8 +66,9 @@ fun BarCodeScreen(
     )
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    val state by viewModel.uiState.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    val uiState by viewModel.uiState.collectAsState() // Renamed to uiState for clarity
 
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -92,6 +80,7 @@ fun BarCodeScreen(
     }
 
     var showAddProductDialog by remember { mutableStateOf(false) }
+    var showSearchByNameDialog by remember { mutableStateOf(false) }
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -110,8 +99,8 @@ fun BarCodeScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        when (val currentState = state) {
-            is BarcodeUiState.Loading -> {
+        when (val currentState = uiState) { // Use the collected uiState
+            is BarcodeUiState.Loading, BarcodeUiState.SearchingByName -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -123,24 +112,37 @@ fun BarCodeScreen(
             is BarcodeUiState.ProductFound -> {
                 when (val productState = currentState.product) {
                     is ResourceState.Success -> {
-                        val product = productState.data
-                        ProductFoundView(product) { mass, time ->
-                            viewModel.addProductWithMass(product, mass.toFloatOrNull() ?: 0f,
-                                time)
-                        }
+                        ProductFoundView(
+                            product = productState.data,
+                            onAddProduct = { mass, time -> // Изменено onConsume на onAddProduct
+                                // Убедимся, что mass это Float для viewModel
+                                val massFloat = mass.toFloatOrNull() ?: 0f
+                                viewModel.addProductWithMass(productState.data, massFloat, time)
+                            }
+                            // onScanAgain удален, так как его нет в ProductFoundView
+                        )
                     }
 
                     is ResourceState.Error -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                        // Показываем ошибку, если ResourceState.Error
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Text("Ошибка: ${productState.message}", color = Color.Red)
+                            Text(
+                                "Ошибка загрузки продукта: ${productState.message}",
+                                color = Color.Red,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = { viewModel.resetState() }) { Text("Сканировать снова") }
                         }
                     }
 
                     is ResourceState.Loading -> {
-                        // Отображение индикатора загрузки
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -151,168 +153,167 @@ fun BarCodeScreen(
                 }
             }
 
+            is BarcodeUiState.ProductsFoundByName -> {
+                Column(modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)) {
+                    Text(
+                        "Найденные продукты:",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(currentState.products) { product ->
+                            ProductRow(product = product, onClick = {
+                                viewModel.manualProductSelect(product)
+                                showSearchByNameDialog = false
+                            })
+                        }
+                    }
+                    Button(
+                        onClick = { viewModel.resetState() },
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 8.dp)
+                    ) {
+                        Text("Сканировать штрих-код")
+                    }
+                }
+            }
+
             is BarcodeUiState.ProductNotFound -> {
                 ProductNotFoundView(
-                    onManualAdd = { showAddProductDialog = true },
+                    onManualAdd = {
+                        showAddProductDialog = true
+
+                    },
                     onScanAgain = { viewModel.resetState() }
                 )
             }
 
-            is BarcodeUiState.ProductAdded -> {
-                ProductAddedView(onDone = { navController.popBackStack() })
+            is BarcodeUiState.NoProductsFoundByName -> {
+                NoProductsFoundByNameView(
+                    query = currentState.query,
+                    onSearchAgain = {
+                        showSearchByNameDialog = true // Снова открываем диалог поиска
+                    },
+                    onScan = { viewModel.resetState() } // Переходим к сканированию
+                )
             }
 
-            is BarcodeUiState.Error -> { // Обработка общей ошибки из BarcodeUiState
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Ошибка: ${currentState.message}", color = Color.Red)
+            is BarcodeUiState.ProductAdded -> {
+                ProductAddedView(
+                    onDone = {
+                        viewModel.resetState() // Сбрасываем состояние после добавления продукта
+                        navController.navigate("home") // Переход на главный экран или другой экран
+                    }
+                )
+            }
+
+            is BarcodeUiState.Error -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        "Произошла ошибка: ${currentState.message}",
+                        color = Color.Red,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { viewModel.resetState() }) { Text("Попробовать снова") }
                 }
             }
 
-            else -> {
-                // Основной вид сканера
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    // Заголовок сканера
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xff986ef2))
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Наведите камеру на штрих-код",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    // Отображение камеры и сканера
-                    if (hasCameraPermission) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            AndroidView(
-                                modifier = Modifier.fillMaxSize(),
-                                factory = { context ->
-                                    val previewView = PreviewView(context)
-                                    val cameraExecutor = Executors.newSingleThreadExecutor()
-                                    val cameraProviderFuture =
-                                        ProcessCameraProvider.getInstance(context)
-
-                                    cameraProviderFuture.addListener({
-                                        val cameraProvider = cameraProviderFuture.get()
-
-                                        val preview = Preview.Builder().build().also {
-                                            it.surfaceProvider = previewView.surfaceProvider
-                                        }
-
-                                        val imageAnalysis = ImageAnalysis.Builder()
-                                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                            .build()
-
-                                        val options = BarcodeScannerOptions.Builder()
-                                            .setBarcodeFormats(
-                                                Barcode.FORMAT_EAN_13,
-                                                Barcode.FORMAT_EAN_8,
-                                                Barcode.FORMAT_UPC_A,
-                                                Barcode.FORMAT_UPC_E,
-                                                Barcode.FORMAT_CODE_39,
-                                                Barcode.FORMAT_CODE_93,
-                                                Barcode.FORMAT_CODE_128,
-                                                Barcode.FORMAT_QR_CODE
-                                            )
-                                            .build()
-
-                                        val barcodeScanner = BarcodeScanning.getClient(options)
-
-                                        imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
-                                            processImageProxy(
-                                                imageProxy,
-                                                barcodeScanner
-                                            ) { barcodeValue ->
-                                                viewModel.checkProduct(barcodeValue)
+            BarcodeUiState.Scanning -> {
+                if (hasCameraPermission) {
+                    AndroidView(
+                        factory = { context ->
+                            val previewView = PreviewView(context)
+                            val cameraProvider = cameraProviderFuture.get()
+                            val preview = Preview.Builder().build().also {
+                                it.surfaceProvider = previewView.surfaceProvider
+                            }
+                            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                            val imageAnalysis = ImageAnalysis.Builder()
+                                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                .build()
+                                .apply {
+                                    setAnalyzer(
+                                        Executors.newSingleThreadExecutor(),
+                                        BarcodeAnalyzer { barcode ->
+                                            val currentAnalyzerState = uiState
+                                            if (barcode != lastBarcodeValue || (currentAnalyzerState is BarcodeUiState.Scanning)) {
+                                                lastBarcodeValue = barcode
+                                                viewModel.checkProduct(barcode)
                                             }
                                         }
-
-                                        try {
-                                            cameraProvider.unbindAll()
-                                            cameraProvider.bindToLifecycle(
-                                                lifecycleOwner,
-                                                CameraSelector.DEFAULT_BACK_CAMERA,
-                                                preview,
-                                                imageAnalysis
-                                            )
-                                        } catch (e: Exception) {
-                                            Log.e("BarCodeScreen", "Ошибка при привязке камеры", e)
-                                        }
-                                    }, ContextCompat.getMainExecutor(context))
-
-                                    previewView
+                                    )
                                 }
-                            )
-                        }
-                    } else {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                text = "Необходимо разрешение на использование камеры",
-                                color = Color.Black
-                            )
+                            try {
+                                cameraProvider.unbindAll()
+                                cameraProvider.bindToLifecycle(
+                                    lifecycleOwner,
+                                    cameraSelector,
+                                    preview,
+                                    imageAnalysis
+                                )
+                            } catch (e: Exception) {
+                                Log.e("BarCodeScreen", "Use case binding failed", e)
+                            }
+                            previewView
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Требуется разрешение на использование камеры")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(onClick = { requestPermissionLauncher.launch(Manifest.permission.CAMERA) }) {
+                                Text("Предоставить разрешение")
+                            }
                         }
                     }
                 }
             }
         }
 
-        // Кнопка "Ввести вручную" внизу экрана
-        // Отображаем кнопку только если не идет процесс добавления или продукт не найден
-        if (state !is BarcodeUiState.ProductAdded && state !is BarcodeUiState.ProductFound) {
+        // Кнопка "Найти по названию" внизу экрана
+        if (uiState is BarcodeUiState.Scanning || uiState is BarcodeUiState.Error || uiState is BarcodeUiState.ProductNotFound || uiState is BarcodeUiState.NoProductsFoundByName) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp)
+                    .fillMaxSize()
+                    .padding(bottom = 32.dp), // Отступ снизу
+                contentAlignment = Alignment.BottomCenter
             ) {
                 Button(
-                    onClick = { showAddProductDialog = true },
-                    modifier = Modifier
-                        .height(48.dp)
-                        .widthIn(min = 200.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xff986ef2)
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 4.dp
-                    )
+                    onClick = { showSearchByNameDialog = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Edit,
-                            contentDescription = "Ввести вручную",
-                            tint = Color.White
-                        )
-                        Text(
-                            text = "Ввести вручную",
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    Icon(
+                        Icons.Filled.Edit,
+                        contentDescription = "Ввести вручную",
+                        tint = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Ввести вручную", color = Color.White)
                 }
             }
         }
     }
 
-    // Диалог добавления нового продукта
     if (showAddProductDialog) {
+        val barcodeForDialog =
+            (uiState as? BarcodeUiState.ProductNotFound)?.identifier ?: lastBarcodeValue ?: ""
         AddProductDialog(
-            barcodeValue = (state as? BarcodeUiState.ProductNotFound)?.barcode ?: "",
+            barcodeValue = barcodeForDialog,
             onDismiss = { showAddProductDialog = false },
             onProductAdd = { product ->
                 viewModel.addNewProduct(product)
@@ -320,44 +321,155 @@ fun BarCodeScreen(
             }
         )
     }
+
+    if (showSearchByNameDialog) {
+        SearchByNameDialog(
+            onDismiss = {
+                showSearchByNameDialog = false
+                if (uiState is BarcodeUiState.Error || uiState is BarcodeUiState.NoProductsFoundByName) {
+                    viewModel.resetState()
+                }
+            },
+            onSearch = { name ->
+                viewModel.searchProductByName(name)
+                showSearchByNameDialog = false // Закрываем диалог после поиска
+            }
+        )
+    }
 }
 
-
-private var barcodeValueJob: Job? = null
-var lastBarcodeValue: String? = null
-
-@OptIn(ExperimentalGetImage::class)
-private fun processImageProxy(
-    imageProxy: ImageProxy,
-    barcodeScanner: BarcodeScanner,
-    onBarcodeDetected: (String) -> Unit
+@Composable
+fun SearchByNameDialog(
+    onDismiss: () -> Unit,
+    onSearch: (String) -> Unit
 ) {
-    val mediaImage = imageProxy.image
-    if (mediaImage != null) {
-        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-        barcodeScanner.process(image)
-            .addOnSuccessListener { barcodes ->
-                if (barcodes.isNotEmpty()) {
-                    barcodes.firstOrNull()?.rawValue?.let { barcodeValue ->
-                        // Debounce logic
-                        if (barcodeValue != lastBarcodeValue) {
-                            lastBarcodeValue = barcodeValue
-                            barcodeValueJob?.cancel()
-                            barcodeValueJob = CoroutineScope(Dispatchers.Main).launch {
-                                delay(500) // Задержка в 500 миллисекунд
-                                onBarcodeDetected(barcodeValue)
-                            }
+    var productName by remember { mutableStateOf("") }
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Поиск продукта по названию",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                OutlinedTextField(
+                    value = productName,
+                    onValueChange = { productName = it },
+                    label = { Text("Название продукта") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Отмена")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(onClick = {
+                        if (productName.isNotBlank()) {
+                            onSearch(productName)
                         }
+                    }) {
+                        Text("Найти")
                     }
                 }
             }
-            .addOnFailureListener {
-                Log.e("BarCodeScreen", "Ошибка сканирования штрих-кода", it)
-            }
-            .addOnCompleteListener {
-                imageProxy.close()
-            }
-    } else {
-        imageProxy.close()
+        }
+    }
+}
+
+@Composable
+fun ProductRow(product: Product, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = product.name,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        Text(text = "${product.calories} ккал", style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+fun NoProductsFoundByNameView(query: String, onSearchAgain: () -> Unit, onScan: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            "По запросу \"$query\" ничего не найдено.",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onSearchAgain, modifier = Modifier.fillMaxWidth()) {
+            Text("Искать снова по названию")
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedButton(onClick = onScan, modifier = Modifier.fillMaxWidth()) {
+            Text("Сканировать штрих-код")
+        }
+    }
+}
+
+
+private class BarcodeAnalyzer(
+    private val onBarcodeDetected: (String) -> Unit
+) : ImageAnalysis.Analyzer {
+    private val barcodeScanner: BarcodeScanner = BarcodeScanning.getClient(
+        BarcodeScannerOptions.Builder()
+            .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
+            .build()
+    )
+    private var lastAnalyzedTimestamp = 0L
+
+    @OptIn(ExperimentalGetImage::class)
+    override fun analyze(imageProxy: ImageProxy) {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastAnalyzedTimestamp < 1000) { // Анализ не чаще раза в секунду
+            imageProxy.close()
+            return
+        }
+
+        val mediaImage = imageProxy.image
+        if (mediaImage != null) {
+            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+            barcodeScanner.process(image)
+                .addOnSuccessListener { barcodes ->
+                    barcodes.firstOrNull()?.rawValue?.let { barcode ->
+                        onBarcodeDetected(barcode)
+                        lastAnalyzedTimestamp =
+                            currentTime // Обновляем время только после успешного обнаружения
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("BarcodeAnalyzer", "Barcode scanning failed", exception)
+                }
+                .addOnCompleteListener {
+                    imageProxy.close() // Закрываем imageProxy в любом случае
+                }
+        } else {
+            imageProxy.close()
+        }
     }
 }

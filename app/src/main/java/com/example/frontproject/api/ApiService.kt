@@ -9,6 +9,7 @@ import com.example.frontproject.data.model.ConsumeProductResponse
 import com.example.frontproject.data.model.CreateUserProfileRequest
 import com.example.frontproject.data.model.CreateUserProfileResponse
 import com.example.frontproject.data.model.ProductResponseByBcode
+import com.example.frontproject.data.model.ProductsByNameResponseDto // Убедитесь, что импорт правильный
 import com.example.frontproject.data.model.RequestIdResponse
 import retrofit2.Response
 import retrofit2.http.Body
@@ -46,6 +47,12 @@ interface ApiService {
 
     @POST("products")
     suspend fun addProduct(@Body productRequest: AddProductRequest): Response<Unit> // Или Response<Void> если сервер ничего не возвращает в теле
+
+    @GET("products/name/{productName}")
+    suspend fun getProductsByName(@Path("productName") productName: String): Response<RequestIdResponse>
+
+    @GET("heavy_response/{id}")
+    suspend fun getProductsByNameResponse(@Path("id") requestId: String): Response<ProductsByNameResponseDto>
 
     @POST("user/product")
     suspend fun consumeProduct(
