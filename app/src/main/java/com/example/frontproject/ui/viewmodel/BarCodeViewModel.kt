@@ -58,9 +58,9 @@ class BarCodeViewModel(
             // Сбрасываем currentBarcodeJob после завершения, если это необходимо,
             // или оставляем, чтобы предотвратить повторный запрос до resetState()
             // В данном случае, лучше сбросить, чтобы следующий скан того же кода после результата (не Loading) прошел
-//             if (_uiState.value !is BarcodeUiState.Loading) {
-//                 currentBarcodeJob = null
-//             }
+             if (_uiState.value !is BarcodeUiState.Loading) {
+                 currentBarcodeJob = null
+             }
         }
     }
 
@@ -107,6 +107,7 @@ class BarCodeViewModel(
                 }
             }
         }
+        resetState()
     }
 
     companion object {
