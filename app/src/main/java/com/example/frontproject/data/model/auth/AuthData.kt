@@ -1,6 +1,4 @@
-package com.example.frontproject.data.model
-
-import androidx.compose.ui.text.font.FontWeight
+package com.example.frontproject.data.model.auth
 
 data class AuthRequest(val username: String, val password: String)
 

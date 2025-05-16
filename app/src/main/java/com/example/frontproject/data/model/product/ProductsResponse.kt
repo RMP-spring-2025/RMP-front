@@ -1,4 +1,4 @@
-package com.example.frontproject.data.model
+package com.example.frontproject.data.model.product
 
 import com.google.gson.annotations.SerializedName
 

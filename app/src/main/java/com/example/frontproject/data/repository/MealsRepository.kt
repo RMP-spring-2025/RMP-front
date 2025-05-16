@@ -3,10 +3,10 @@ package com.example.frontproject.data.repository
 import android.util.Log
 import com.example.frontproject.api.ApiRequestExecutor
 import com.example.frontproject.api.ApiService
-import com.example.frontproject.data.model.AddProductRequest
-import com.example.frontproject.data.model.ConsumeProductRequest
-import com.example.frontproject.data.model.Product
-import com.example.frontproject.data.model.ProductsResponse
+import com.example.frontproject.data.model.product.AddProductRequest
+import com.example.frontproject.data.model.meal.ConsumeProductRequest
+import com.example.frontproject.data.model.product.Product
+import com.example.frontproject.data.model.product.ProductsResponse
 import com.example.frontproject.domain.util.ResourceState
 
 

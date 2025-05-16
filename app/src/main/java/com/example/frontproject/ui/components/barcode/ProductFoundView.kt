@@ -25,7 +25,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.frontproject.data.model.Product
+import com.example.frontproject.data.model.product.Product
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 

@@ -1,5 +1,6 @@
-package com.example.frontproject.data.model
+package com.example.frontproject.ui.model
 
+import com.example.frontproject.data.model.product.Product
 import com.example.frontproject.domain.util.ResourceState
 
 

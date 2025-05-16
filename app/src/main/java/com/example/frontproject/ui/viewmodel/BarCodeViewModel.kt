@@ -2,14 +2,14 @@ package com.example.frontproject.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.frontproject.data.model.BarcodeUiState
-import com.example.frontproject.data.model.Product
+import com.example.frontproject.ui.model.BarcodeUiState
+import com.example.frontproject.data.model.product.Product
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.util.Log
 import androidx.lifecycle.ViewModelProvider
-import com.example.frontproject.data.model.ConsumeProductRequest
+import com.example.frontproject.data.model.meal.ConsumeProductRequest
 import com.example.frontproject.data.repository.MealsRepository // Убедитесь, что путь правильный
 import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.ui.components.screens.lastBarcodeValue

@@ -1,14 +1,14 @@
 package com.example.frontproject.api
 
-import com.example.frontproject.data.model.AddProductRequest
-import com.example.frontproject.data.model.AuthRequest
-import com.example.frontproject.data.model.AuthResponse
+import com.example.frontproject.data.model.product.AddProductRequest
+import com.example.frontproject.data.model.auth.AuthRequest
+import com.example.frontproject.data.model.auth.AuthResponse
 import com.example.frontproject.data.model.CaloriesStatsResponse
-import com.example.frontproject.data.model.ConsumeProductRequest
-import com.example.frontproject.data.model.ConsumeProductResponse
-import com.example.frontproject.data.model.CreateUserProfileRequest
-import com.example.frontproject.data.model.CreateUserProfileResponse
-import com.example.frontproject.data.model.ProductResponseByBcode
+import com.example.frontproject.data.model.meal.ConsumeProductRequest
+import com.example.frontproject.data.model.meal.ConsumeProductResponse
+import com.example.frontproject.data.model.auth.CreateUserProfileRequest
+import com.example.frontproject.data.model.auth.CreateUserProfileResponse
+import com.example.frontproject.data.model.product.ProductResponseByBcode
 import com.example.frontproject.data.model.ProductsByNameResponseDto // Убедитесь, что импорт правильный
 import com.example.frontproject.data.model.RequestIdResponse
 import retrofit2.Response
@@ -18,7 +18,7 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-import com.example.frontproject.data.model.ProductsResponse
+import com.example.frontproject.data.model.product.ProductsResponse
 
 
 data class RefreshTokenRequest(val token: String)

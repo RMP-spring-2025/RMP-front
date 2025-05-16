@@ -1,4 +1,4 @@
-package com.example.frontproject.data.model
+package com.example.frontproject.data.model.meal
 
 data class ConsumeProductRequest(
     val productId: Int,

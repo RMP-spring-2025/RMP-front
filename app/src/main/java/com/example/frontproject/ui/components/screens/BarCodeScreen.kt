@@ -28,18 +28,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontproject.RmpApplication
-import com.example.frontproject.data.model.BarcodeUiState
-import com.example.frontproject.data.model.Product // Убедитесь, что импорт правильный
+import com.example.frontproject.ui.model.BarcodeUiState
+import com.example.frontproject.data.model.product.Product // Убедитесь, что импорт правильный
 import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.ui.components.barcode.AddProductDialog
 import com.example.frontproject.ui.components.barcode.ProductAddedView

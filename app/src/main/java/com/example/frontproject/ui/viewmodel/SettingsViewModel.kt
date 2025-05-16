@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.frontproject.api.ApiRequestExecutor
-import com.example.frontproject.data.model.AuthRequest
-import com.example.frontproject.data.model.CreateUserProfileRequest
+import com.example.frontproject.data.model.auth.AuthRequest
+import com.example.frontproject.data.model.auth.CreateUserProfileRequest
 import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.store.SettingsRepository
 import com.example.frontproject.store.TokenRepository

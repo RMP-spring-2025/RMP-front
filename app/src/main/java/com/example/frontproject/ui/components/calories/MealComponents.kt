@@ -13,8 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.frontproject.data.model.GroupedMeals
-import com.example.frontproject.data.model.Meal
+import com.example.frontproject.data.model.meal.GroupedMeals
+import com.example.frontproject.data.model.meal.Meal
 
 @Composable
 fun MealSection(title: String, meals: List<Meal>) {

@@ -1,4 +1,4 @@
-package com.example.frontproject.data.model
+package com.example.frontproject.data.model.meal
 
 // Структура для хранения сгруппированных по времени приемов пищи
 data class GroupedMeals(

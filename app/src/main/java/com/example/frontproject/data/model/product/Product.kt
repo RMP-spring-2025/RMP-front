@@ -1,4 +1,4 @@
-package com.example.frontproject.data.model
+package com.example.frontproject.data.model.product
 
 data class Product(
     val id: Int,

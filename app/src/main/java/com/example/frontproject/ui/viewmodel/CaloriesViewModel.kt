@@ -3,10 +3,10 @@ package com.example.frontproject.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.frontproject.data.model.GroupedMeals // <-- Импорт GroupedMeals
-import com.example.frontproject.data.model.Meal
-import com.example.frontproject.data.model.ProductItem
-import com.example.frontproject.data.model.ProductsResponse
+import com.example.frontproject.data.model.meal.GroupedMeals // <-- Импорт GroupedMeals
+import com.example.frontproject.data.model.meal.Meal
+import com.example.frontproject.data.model.product.ProductItem
+import com.example.frontproject.data.model.product.ProductsResponse
 import com.example.frontproject.data.repository.MealsRepository
 import com.example.frontproject.domain.util.ResourceState
 import kotlinx.coroutines.flow.*
