@@ -106,7 +106,6 @@ fun MyApp(modifier: Modifier = Modifier) {
         "barCode",
         "profile",
         "settings",
-        "welcome"
     )
 
     Surface(color = Color.White) {
@@ -179,6 +178,7 @@ fun NavHostContainer(
             // Экран приветствия
             composable("welcome") {
                 WelcomeScreen(
+                    navController = navController,
                     onRegisterClick = { navController.navigate("register") },
                     onLoginClick = { navController.navigate("login") }
                 )

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -36,13 +37,21 @@ import com.example.frontproject.ui.viewmodel.SettingsViewModel
 import java.util.Calendar
 import java.util.Date
 
+// Определим цели здесь для удобства
+enum class GoalOption(val displayName: String, val apiValue: String) {
+    GAIN_WEIGHT("Набрать вес", "gain weight"),
+    LOOSE_WEIGHT("Сбросить вес", "loose weight"),
+    KEEP_WEIGHT("Поддерживать вес", "keep weight")
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateProfileScreen(
     settingsViewModel: SettingsViewModel
 ) {
     var username by remember { mutableStateOf("") }
-    var birthDate by remember { mutableStateOf("") } // Будет хранить выбранную дату в формате ГГГГ-ММ-ДД
-    var displayBirthDate by remember { mutableStateOf("Выберите дату рождения") } // Для отображения
+    var birthDate by remember { mutableStateOf("") }
+    var displayBirthDate by remember { mutableStateOf("Выберите дату рождения") }
     var weight by remember { mutableStateOf("") }
     var height by remember { mutableStateOf("") }
     val createUserState by settingsViewModel.createUserState.collectAsState()
@@ -59,13 +68,16 @@ fun CreateProfileScreen(
         context,
         { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDayOfMonth: Int ->
             birthDate =
-                "$selectedYear-${selectedMonth + 1}-$selectedDayOfMonth" // Сохраняем в формате для API
+                "$selectedYear-${selectedMonth + 1}-$selectedDayOfMonth"
             displayBirthDate =
-                "$selectedDayOfMonth/${selectedMonth + 1}/$selectedYear" // Формат для отображения
+                "$selectedDayOfMonth/${selectedMonth + 1}/$selectedYear"
         }, year, month, day
     )
-    // Ограничиваем максимальную дату сегодняшним днем
     datePickerDialog.datePicker.maxDate = Date().time
+
+    val goalOptions = GoalOption.entries
+    var expandedGoalMenu by remember { mutableStateOf(false) }
+    var selectedGoal by remember { mutableStateOf(goalOptions[0]) }
 
 
     Column(
@@ -106,7 +118,6 @@ fun CreateProfileScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Поле для выбора даты рождения
         OutlinedTextField(
             value = displayBirthDate,
             onValueChange = { /* Блокируем прямой ввод */ },
@@ -115,17 +126,15 @@ fun CreateProfileScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { datePickerDialog.show() },
-            readOnly = true, // Делаем поле только для чтения
-            enabled = false, // Отключаем, чтобы цвет был как у неактивного поля, но clickable работает
+            readOnly = true,
+            enabled = false,
             colors = OutlinedTextFieldDefaults.colors(
-                // Кастомные цвета для "отключенного" состояния
                 disabledTextColor = MaterialTheme.colorScheme.onSurface,
                 disabledBorderColor = MaterialTheme.colorScheme.outline,
                 disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         )
-
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -140,9 +149,9 @@ fun CreateProfileScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Box(
                 modifier = Modifier
-                    .height(56.dp) // Стандартная высота OutlinedTextField
+                    .height(56.dp)
                     .width(56.dp)
-                    .clip(RoundedCornerShape(15.dp)) // Скругление углов
+                    .clip(RoundedCornerShape(4.dp)) // Стандартное скругление для OutlinedTextField
                     .background(
                         Brush.linearGradient(
                             colors = listOf(Color(0xFF9DCEFF), Color(0xFF92A3FD))
@@ -167,9 +176,9 @@ fun CreateProfileScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Box(
                 modifier = Modifier
-                    .height(56.dp) // Стандартная высота OutlinedTextField
+                    .height(56.dp)
                     .width(56.dp)
-                    .clip(RoundedCornerShape(15.dp)) // Скругление углов
+                    .clip(RoundedCornerShape(4.dp)) // Стандартное скругление для OutlinedTextField
                     .background(
                         Brush.linearGradient(
                             colors = listOf(Color(0xFF9DCEFF), Color(0xFF92A3FD))
@@ -181,22 +190,57 @@ fun CreateProfileScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Выбор цели
+        ExposedDropdownMenuBox(
+            expanded = expandedGoalMenu,
+            onExpandedChange = { expandedGoalMenu = !expandedGoalMenu },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = selectedGoal.displayName,
+                onValueChange = {},
+                label = { Text("Ваша цель") },
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedGoalMenu) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = expandedGoalMenu,
+                onDismissRequest = { expandedGoalMenu = false }
+            ) {
+                goalOptions.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option.displayName) },
+                        onClick = {
+                            selectedGoal = option
+                            expandedGoalMenu = false
+                        }
+                    )
+                }
+            }
+        }
+
+
         Spacer(modifier = Modifier.height(24.dp))
 
         GradientButton(
             text = "Дальше",
             onClick = {
                 val age =
-                    calculateAgeFromBirthDateString(birthDate) // Используем birthDate (ГГГГ-ММ-ДД)
+                    calculateAgeFromBirthDateString(birthDate)
                 val heightValue = height.toDoubleOrNull() ?: 0.0
-                val weightValue = weight.toDoubleOrNull() ?: 0.0 // Вес не передается в createUserProfile
+                val weightValue = weight.toDoubleOrNull() ?: 0.0
 
                 settingsViewModel.createUserProfile(
                     username = username,
                     age = age,
                     height = heightValue,
                     weight = weightValue,
-                    goal = "gain weight"
+                    goal = selectedGoal.apiValue // Используем выбранную цель
                 )
             }
         )
@@ -211,7 +255,6 @@ fun CreateProfileScreen(
     }
 }
 
-// Вспомогательная функция для расчета возраста из строки ГГГГ-ММ-ДД
 fun calculateAgeFromBirthDateString(birthDateString: String): Int {
     if (birthDateString.isBlank() || !birthDateString.contains("-")) return 0
     return try {
@@ -229,6 +272,6 @@ fun calculateAgeFromBirthDateString(birthDateString: String): Int {
         }
         age
     } catch (e: Exception) {
-        0 // Возвращаем 0 в случае ошибки парсинга
+        0
     }
 }

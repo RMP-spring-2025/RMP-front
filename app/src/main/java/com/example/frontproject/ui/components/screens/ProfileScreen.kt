@@ -57,7 +57,7 @@ fun ProfileScreen(
             .background(Color(0xFFFDFDFD))
     ) {
         ScreenHeader(
-            title = "Profile",
+            title = "Профиль",
             onBackClick = {
                 navController.popBackStack()
             },
@@ -105,7 +105,7 @@ fun ProfileScreen(
                         ) {
                             Icon(
                                 painterResource(R.drawable.icon_profile_menu),
-                                contentDescription = "Profile",
+                                contentDescription = "Профиль",
                                 modifier = Modifier.size(40.dp),
                                 tint = primaryColor
                             )
@@ -117,12 +117,12 @@ fun ProfileScreen(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = userProfile.username, // Используем данные из ViewModel
+                                text = userProfile.username,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.W500,
                             )
                             Text(
-                                text = userProfile.goal, // Используем данные из ViewModel
+                                text = userProfile.goal,
                                 fontSize = 14.sp,
                                 color = Color.Gray,
                                 fontWeight = FontWeight.W400,
@@ -139,7 +139,7 @@ fun ProfileScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
                         ) {
                             Text(
-                                text = "Edit",
+                                text = "Ред.",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.W400,
                                 color = Color.White
@@ -165,8 +165,8 @@ fun ProfileScreen(
                                     .padding(vertical = 16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                GradientText(text = "${userProfile.height} cm") // Используем данные
-                                Text("Height", fontSize = 14.sp, color = Color(0xFFB6B4C2))
+                                GradientText(text = "${userProfile.height} cm")
+                                Text("Рост", fontSize = 14.sp, color = Color(0xFF908F94))
                             }
                         }
                         Card(
@@ -182,8 +182,8 @@ fun ProfileScreen(
                                     .padding(vertical = 16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                GradientText(text = "${userProfile.weight}kg") // Используем данные
-                                Text("Weight", fontSize = 14.sp, color = Color(0xFFB6B4C2))
+                                GradientText(text = "${userProfile.weight}kg")
+                                Text("Вес", fontSize = 14.sp, color = Color(0xFF908F94))
                             }
                         }
                         Card(
@@ -199,8 +199,8 @@ fun ProfileScreen(
                                     .padding(vertical = 16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                GradientText(text = "${userProfile.age}yo") // Используем данные
-                                Text("Age", fontSize = 14.sp, color = Color(0xFFB6B4C2))
+                                GradientText(text = "${userProfile.age}yo")
+                                Text("Возраст", fontSize = 14.sp, color = Color(0xFF908F94))
                             }
                         }
                     }
@@ -215,16 +215,16 @@ fun ProfileScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "Account",
+                                text = "Аккаунт",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.W600,
                                 modifier = Modifier.padding(bottom = 12.dp)
                             )
 
-                            LinkItem("Personal Data", R.drawable.icon_profile) {}
-                            LinkItem("Achievements", R.drawable.icon_achievement) {}
-                            LinkItem("Activity History", R.drawable.icon_activity) {}
-                            LinkItem("Workout Progress", R.drawable.icon_workout) {
+                            LinkItem("Персональные данные", R.drawable.icon_profile) {}
+                            LinkItem("Достижения", R.drawable.icon_achievement) {}
+                            LinkItem("История активностей", R.drawable.icon_activity) {}
+                            LinkItem("Прогресс тренировки", R.drawable.icon_workout) {
                                 navController.navigate("settings")
                             }
                         }
@@ -242,7 +242,7 @@ fun ProfileScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "Notification",
+                                text = "Уведомления",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.W600,
                                 modifier = Modifier.padding(bottom = 12.dp)
@@ -263,10 +263,10 @@ fun ProfileScreen(
                                     )
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
-                                        "Pop-up Notification",
+                                        "Уведомления",
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.W400,
-                                        color = Color(0xFFB6B4C2),
+                                        color = Color(0xFF908F94),
                                     )
                                 }
                                 Switch(
@@ -295,15 +295,15 @@ fun ProfileScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "Other",
+                                text = "Остальное",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.W600,
                                 modifier = Modifier.padding(bottom = 12.dp)
                             )
 
-                            LinkItem("Contact Us", R.drawable.icon_message) {}
-                            LinkItem("Privacy Policy", R.drawable.icon_privacy) {}
-                            LinkItem("Settings", R.drawable.icon_setting) {
+                            LinkItem("О нас", R.drawable.icon_message) {}
+                            LinkItem("Политика конфиденциальности", R.drawable.icon_privacy) {}
+                            LinkItem("Настройки", R.drawable.icon_setting) {
                                 navController.navigate("settings")
                             }
                         }
@@ -345,7 +345,7 @@ fun LinkItem(title: String, icon: Int? = null, onClick: () -> Unit) {
                 text = title,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.W400,
-                color = Color(0xFFB6B4C2),
+                color = Color(0xFF908F94),
             )
         }
         Icon(
