@@ -7,6 +7,7 @@ import com.example.frontproject.api.AuthInterceptor
 import com.example.frontproject.api.TokenRefreshAuthenticator
 import com.example.frontproject.data.repository.CaloriesRepository
 import com.example.frontproject.data.repository.MealsRepository
+import com.example.frontproject.data.repository.UserProfileRepository
 import com.example.frontproject.store.SettingsRepository
 import com.example.frontproject.store.TokenRepository
 import com.google.gson.Gson
@@ -88,5 +89,9 @@ class AppContainer(context: Context) {
 
     val caloriesRepository: CaloriesRepository by lazy {
         CaloriesRepository(apiRequestExecutor, apiService)
+    }
+
+    val userProfileRepository: UserProfileRepository by lazy {
+        UserProfileRepository(apiRequestExecutor)
     }
 }

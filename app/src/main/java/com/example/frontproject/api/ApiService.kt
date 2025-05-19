@@ -19,6 +19,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 import com.example.frontproject.data.model.product.ProductsResponse
+import com.example.frontproject.data.model.stats.UserProfileStatsResponse
 
 
 data class RefreshTokenRequest(val token: String)
@@ -76,5 +77,11 @@ interface ApiService {
 
     @GET("heavy_response/{id}")
     suspend fun getCaloriesResponse(@Path("id") requestId: String): Response<CaloriesStatsResponse>
+
+    @GET("user/stat")
+    suspend fun getUserStats(): Response<RequestIdResponse>
+
+    @GET("heavy_response/{id}")
+    suspend fun getUserStatsResponse(@Path("id") requestId: String): Response<UserProfileStatsResponse>
 
 }

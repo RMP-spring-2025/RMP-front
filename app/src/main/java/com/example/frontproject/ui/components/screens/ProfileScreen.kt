@@ -19,268 +19,302 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontproject.R
+import com.example.frontproject.RmpApplication
 import com.example.frontproject.ui.components.common.ScreenHeader
+import com.example.frontproject.ui.model.ProfileUiState
+import com.example.frontproject.ui.viewmodel.ProfileViewModel
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(
+    navController: NavController,
+    profileViewModel: ProfileViewModel = viewModel(
+        factory = ProfileViewModel.provideFactory(
+            (LocalContext.current.applicationContext as RmpApplication).appContainer.userProfileRepository
+        )
+    )
+) {
     val primaryColor = Color(0xff986ef2)
     var notificationsEnabled by remember { mutableStateOf(true) }
     val scrollState = rememberScrollState()
+    val uiState by profileViewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        profileViewModel.fetchUserProfileStats()
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFDFDFD))
     ) {
-        // Header
         ScreenHeader(
             title = "Profile",
             onBackClick = {
-                navController.popBackStack() // ➡️ Возвращаемся назад по стеку
+                navController.popBackStack()
             },
         )
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 25.dp, vertical = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Аватарка
-                Box(
-                    modifier = Modifier
-                        .size(66.dp)
-                        .clip(CircleShape)
-                        .background(Color.LightGray),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painterResource(R.drawable.icon_profile_menu),
-                        contentDescription = "Profile",
-                        modifier = Modifier.size(40.dp),
-                        tint = primaryColor
-                    )
+        when (val currentState = uiState) {
+            is ProfileUiState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
+            }
 
-                // Имя и программа
+            is ProfileUiState.Error -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Ошибка: ${currentState.message}", color = Color.Red)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = { profileViewModel.fetchUserProfileStats() }) {
+                            Text("Попробовать снова")
+                        }
+                    }
+                }
+            }
+
+            is ProfileUiState.Success -> {
+                val userProfile = currentState.userProfile
                 Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.Center
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
                 ) {
-                    // Имя пользователя
-                    Text(
-                        text = "John Doe",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.W500,
-                    )
-
-                    // Программа
-                    Text(
-                        text = "Weight Gain Program",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        fontWeight = FontWeight.W400,
-                        modifier = Modifier.padding(top = 7.dp)
-                    )
-                }
-                // Кнопка Edit
-                Button(
-                    onClick = { /* TODO */ },
-                    modifier = Modifier
-                        .height(30.dp)
-                        .wrapContentWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    contentPadding = PaddingValues(horizontal = 35.dp, vertical = 0.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
-                ) {
-                    Text(
-                        text = "Edit",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.W400,
-                        color = Color.White
-                    )
-                }
-            }
-            // Показатели
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 25.dp, end = 25.dp, top = 5.dp, bottom = 25.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Рост
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        GradientText(text = "180 cm")
-                        Text("Height", fontSize = 14.sp, color = Color(0xFFB6B4C2))
-                    }
-                }
-                // Вес
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 4.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        GradientText(text = "65kg")
-                        Text("Weight", fontSize = 14.sp, color = Color(0xFFB6B4C2))
-                    }
-                }
-
-                // Возраст
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        GradientText(text = "20yo")
-                        Text("Age", fontSize = 14.sp, color = Color(0xFFB6B4C2))
-                    }
-                }
-            }
-
-            // Аккаунт секция
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 25.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Account",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.W600,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-
-                    LinkItem("Personal Data", R.drawable.icon_profile) {}
-                    LinkItem("Achievements", R.drawable.icon_achievement) {}
-                    LinkItem("Activity History", R.drawable.icon_activity) {}
-                    LinkItem("Workout Progress", R.drawable.icon_workout) {
-                        navController.navigate("settings") // Переход на экран настроек
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Notifications секция
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 25.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Notification",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.W600,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 25.dp, vertical = 20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row()
-                        {
+                        Box(
+                            modifier = Modifier
+                                .size(66.dp)
+                                .clip(CircleShape)
+                                .background(Color.LightGray),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Icon(
-                                painterResource(R.drawable.icon_notif),
-                                contentDescription = "Notification Icon",
-                                tint = Color(0xFF00FF66),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                "Pop-up Notification",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.W400,
-                                color = Color(0xFFB6B4C2),
+                                painterResource(R.drawable.icon_profile_menu),
+                                contentDescription = "Profile",
+                                modifier = Modifier.size(40.dp),
+                                tint = primaryColor
                             )
                         }
-                        Switch(
-                            checked = notificationsEnabled,
-                            onCheckedChange = { notificationsEnabled = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                uncheckedThumbColor = Color.White,
-                                checkedTrackColor = Color(0xFF00FF66).copy(alpha = 0.5f),
-                                uncheckedTrackColor = Color(0xFFB6B4C2).copy(alpha = 0.5f)
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = userProfile.username, // Используем данные из ViewModel
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.W500,
                             )
-                        )
+                            Text(
+                                text = userProfile.goal, // Используем данные из ViewModel
+                                fontSize = 14.sp,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.W400,
+                                modifier = Modifier.padding(top = 7.dp)
+                            )
+                        }
+                        Button(
+                            onClick = { /* TODO: Edit action */ },
+                            modifier = Modifier
+                                .height(30.dp)
+                                .wrapContentWidth(),
+                            shape = RoundedCornerShape(20.dp),
+                            contentPadding = PaddingValues(horizontal = 35.dp, vertical = 0.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                        ) {
+                            Text(
+                                text = "Edit",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.W400,
+                                color = Color.White
+                            )
+                        }
                     }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 25.dp, end = 25.dp, top = 5.dp, bottom = 25.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                GradientText(text = "${userProfile.height} cm") // Используем данные
+                                Text("Height", fontSize = 14.sp, color = Color(0xFFB6B4C2))
+                            }
+                        }
+                        Card(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 4.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                GradientText(text = "${userProfile.weight}kg") // Используем данные
+                                Text("Weight", fontSize = 14.sp, color = Color(0xFFB6B4C2))
+                            }
+                        }
+                        Card(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 8.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                GradientText(text = "${userProfile.age}yo") // Используем данные
+                                Text("Age", fontSize = 14.sp, color = Color(0xFFB6B4C2))
+                            }
+                        }
+                    }
+
+                    // Аккаунт секция
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 25.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Account",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.W600,
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
+
+                            LinkItem("Personal Data", R.drawable.icon_profile) {}
+                            LinkItem("Achievements", R.drawable.icon_achievement) {}
+                            LinkItem("Activity History", R.drawable.icon_activity) {}
+                            LinkItem("Workout Progress", R.drawable.icon_workout) {
+                                navController.navigate("settings")
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Notifications секция
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 25.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Notification",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.W600,
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row()
+                                {
+                                    Icon(
+                                        painterResource(R.drawable.icon_notif),
+                                        contentDescription = "Notification Icon",
+                                        tint = Color(0xFF00FF66),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        "Pop-up Notification",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.W400,
+                                        color = Color(0xFFB6B4C2),
+                                    )
+                                }
+                                Switch(
+                                    checked = notificationsEnabled,
+                                    onCheckedChange = { notificationsEnabled = it },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        uncheckedThumbColor = Color.White,
+                                        checkedTrackColor = Color(0xFF00FF66).copy(alpha = 0.5f),
+                                        uncheckedTrackColor = Color(0xFFB6B4C2).copy(alpha = 0.5f)
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Other секция
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 25.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Other",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.W600,
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
+
+                            LinkItem("Contact Us", R.drawable.icon_message) {}
+                            LinkItem("Privacy Policy", R.drawable.icon_privacy) {}
+                            LinkItem("Settings", R.drawable.icon_setting) {
+                                navController.navigate("settings")
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(25.dp))
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Other секция
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 25.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Other",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.W600,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-
-                    LinkItem("Contact Us", R.drawable.icon_message) {}
-                    LinkItem("Privacy Policy", R.drawable.icon_privacy) {}
-                    LinkItem("Settings", R.drawable.icon_setting) {
-                        navController.navigate("settings") // Переход на экран настроек
-                    }
+            is ProfileUiState.Idle -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Загрузка данных профиля...")
                 }
             }
         }
@@ -292,7 +326,7 @@ fun LinkItem(title: String, icon: Int? = null, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable (onClick = onClick)
+            .clickable(onClick = onClick)
             .padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

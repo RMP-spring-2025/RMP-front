@@ -40,10 +40,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -59,16 +56,30 @@ import androidx.navigation.NavController
 import com.example.frontproject.MyApp
 import com.example.frontproject.R
 import com.example.frontproject.RmpApplication
-import com.example.frontproject.data.repository.CaloriesRepository
 import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.ui.components.common.ProfileHeader
+import com.example.frontproject.ui.model.ProfileUiState
 import com.example.frontproject.ui.viewmodel.CaloriesTodayViewModel
-import java.util.*
+import com.example.frontproject.ui.viewmodel.HomeViewModel
 
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    navController: NavController,
+    homeViewModel: HomeViewModel = viewModel(
+        factory = HomeViewModel.provideFactory(
+            (LocalContext.current.applicationContext as RmpApplication).appContainer.userProfileRepository
+        )
+    )
+) {
+    val homeUiState by homeViewModel.uiState.collectAsState()
 
+    val userNameToShow = when (val state = homeUiState) {
+        is ProfileUiState.Success -> state.userProfile.username
+        is ProfileUiState.Loading -> "Загрузка..."
+        is ProfileUiState.Error -> "Пользователь"
+        is ProfileUiState.Idle -> "Пользователь"
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -77,7 +88,7 @@ fun HomeScreen(navController: NavController) {
     ) {
         // header
         ProfileHeader(
-            userName = "Мария Чмурова",
+            userName = userNameToShow,
             profileImage = painterResource(R.drawable.profile_cat),
             navController = navController
         )
