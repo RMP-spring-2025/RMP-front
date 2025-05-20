@@ -1,5 +1,7 @@
 package com.example.frontproject.ui.components.screens
 
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,27 +9,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,11 +52,13 @@ import androidx.navigation.NavController
 import com.example.frontproject.MyApp
 import com.example.frontproject.R
 import com.example.frontproject.RmpApplication
+import com.example.frontproject.data.repository.HealthConnectAvailability
 import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.ui.components.common.ProfileHeader
 import com.example.frontproject.ui.model.ProfileUiState
 import com.example.frontproject.ui.viewmodel.CaloriesTodayViewModel
 import com.example.frontproject.ui.viewmodel.HomeViewModel
+import com.example.frontproject.ui.viewmodel.StepsViewModel
 
 
 @Composable
@@ -73,6 +71,7 @@ fun HomeScreen(
     )
 ) {
     val homeUiState by homeViewModel.uiState.collectAsState()
+    val context = LocalContext.current.applicationContext as RmpApplication
 
     val userNameToShow = when (val state = homeUiState) {
         is ProfileUiState.Success -> state.userProfile.username
@@ -114,20 +113,30 @@ fun HomeScreen(
             fontSize = with(LocalDensity.current) { 16.sp },)
         Spacer(modifier = Modifier.height(12.dp))
 
-        DashboardScreen(navController = navController)
+        DashboardScreen(
+            navController = navController,
+            caloriesViewModel = viewModel(
+                factory = CaloriesTodayViewModel.provideFactory(
+                    context.appContainer.caloriesRepository
+                )
+            ),
+            stepsViewModel = viewModel(
+                factory = StepsViewModel.provideFactory(
+                    context.appContainer.healthConnectRepository,
+                    context
+                )
+            )
+        )
     }
 }
 
 @Composable
 fun DashboardScreen(
     navController: NavController,
-    viewModel: CaloriesTodayViewModel = viewModel(
-        factory = CaloriesTodayViewModel.provideFactory(
-            (LocalContext.current.applicationContext as RmpApplication).appContainer.caloriesRepository
-        )
-    )
+    caloriesViewModel: CaloriesTodayViewModel,
+    stepsViewModel: StepsViewModel
 ) {
-    val caloriesBurned = when (val caloriesState = viewModel.caloriesState.collectAsState().value) {
+    val caloriesBurned = when (val caloriesState = caloriesViewModel.caloriesState.collectAsState().value) {
         is ResourceState.Success -> caloriesState.data
         is ResourceState.Loading -> 0
         is ResourceState.Error -> 0
@@ -142,8 +151,9 @@ fun DashboardScreen(
             caloriesLeft = 0,
             navController
         )
-        /* TODO: Карточки сна/шагов */
-//        StepsCard(steps = 1543, stepsGoal = 10000)
+        StepsCard(
+            stepsViewModel = stepsViewModel
+        )
     }
 }
 
@@ -207,11 +217,11 @@ fun CaloriesCard(
                 }
 
                 CircularProgressIndicator(
-                    progress = progress,
+                    progress = { progress },
+                    modifier = Modifier.fillMaxSize(),
                     color = Color(0xFF986ef4),
                     strokeWidth = 8.dp,
                     strokeCap = StrokeCap.Round,
-                    modifier = Modifier.fillMaxSize()
                 )
 
                 // Внутренний круг с отступом 5.dp
@@ -249,6 +259,132 @@ fun CaloriesCard(
 }
 
 @Composable
+fun StepsCard(
+    stepsViewModel: StepsViewModel
+) {
+    val uiState by stepsViewModel.uiState.collectAsState()
+
+    // Launcher для запроса разрешений
+    val permissionsLauncher = rememberLauncherForActivityResult(
+        contract = stepsViewModel.getPermissionsLaunchIntent(),
+        onResult = { grantedPermissions ->
+            Log.d("StepsCard", "Permission result: $grantedPermissions")
+            // После получения результата, перезагружаем данные
+            stepsViewModel.loadStepsData()
+        }
+    )
+
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val cardWidth = screenWidth / 2 - 25.dp
+
+    Card(
+        shape = RoundedCornerShape(25.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        modifier = Modifier
+            .size(cardWidth)
+            .clickable {
+                if (uiState.healthConnectAvailability == HealthConnectAvailability.AVAILABLE && !uiState.permissionsGranted) {
+                    // Запрашиваем разрешения, если Health Connect доступен, но разрешения не даны
+                    permissionsLauncher.launch(stepsViewModel.healthConnectRepository.permissions)
+                } else if (uiState.healthConnectAvailability != HealthConnectAvailability.AVAILABLE) {
+                    // TODO: Показать диалог/сообщение о том, что Health Connect не установлен/недоступен
+                    Log.w("StepsCard", "Health Connect is not available: ${uiState.healthConnectAvailability}")
+                } else {
+                    // навигация на график шагов
+                    // navController.navigate("steps_details")
+                    Log.d("StepsCard", "Navigating to steps details or other action")
+                }
+            },
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceAround
+        ) {
+            Text(
+                "Шаги",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Start,
+            )
+
+            if (uiState.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            } else if (uiState.error != null) {
+                Text(
+                    text = uiState.error!!,
+                    style = MaterialTheme.typography.bodySmall.copy(color = Color.Red, fontSize = 10.sp),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (uiState.healthConnectAvailability == HealthConnectAvailability.AVAILABLE && !uiState.permissionsGranted) {
+                    Button(onClick = { permissionsLauncher.launch(stepsViewModel.healthConnectRepository.permissions) }) {
+                        Text("Дать разрешение", fontSize = 10.sp)
+                    }
+                }
+            } else {
+                Text(
+                    text = "${uiState.steps} шагов",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight(700),
+                        brush = Brush.linearGradient(
+                            colors = listOf(Color(0xFF50C878), Color(0xFF2E8B57))
+                        )
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Start,
+                )
+                Box(
+                    modifier = Modifier.size(80.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val progress = if (uiState.goal == 0) 0f else uiState.steps.toFloat() / uiState.goal.toFloat()
+                    CircularProgressIndicator(
+                        progress = {
+                            progress.coerceIn(0f, 1f)
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                        color = Color(0xFF50C878),
+                        strokeWidth = 8.dp,
+                        strokeCap = StrokeCap.Round,
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(Color(0xFF50C878), Color(0xFF2E8B57)),
+                                    start = Offset(Float.POSITIVE_INFINITY, 0f),
+                                    end = Offset(0f, 0f)
+                                ),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Цель: ${uiState.goal}",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Color.White,
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight(500),
+                                textAlign = TextAlign.Center,
+                                lineHeight = 8.sp
+                            ),
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+        @Composable
 fun BmiCard(bmi: Int) {
     val bmiStatus = when {
         bmi < 16.0f -> "Вес значительно ниже нормы."
