@@ -60,9 +60,13 @@ fun CreateProfileScreen(
     val calendar = Calendar.getInstance()
 
     // Добавляем выбор пола
-    val sexOptions = listOf("Мужчина", "Женщина")
+    val sexOptions = listOf(
+        "Мужчина" to "M",
+        "Женщина" to "F"
+    )
     var expandedSexMenu by remember { mutableStateOf(false) }
-    var selectedSex by remember { mutableStateOf(sexOptions[0]) }
+    var selectedSexDisplay by remember { mutableStateOf(sexOptions[0].first) }
+    var selectedSexValue   by remember { mutableStateOf(sexOptions[0].second) }
 
     // State для DatePickerDialog
     val year = calendar.get(Calendar.YEAR)
@@ -149,7 +153,7 @@ fun CreateProfileScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             OutlinedTextField(
-                value = selectedSex,
+                value = selectedSexDisplay,
                 onValueChange = {},
                 label = { Text("Пол") },
                 readOnly = true,
@@ -162,12 +166,13 @@ fun CreateProfileScreen(
                 expanded = expandedSexMenu,
                 onDismissRequest = { expandedSexMenu = false }
             ) {
-                sexOptions.forEach { option ->
+                sexOptions.forEach { (display, apiValue) ->
                     DropdownMenuItem(
-                        text = { Text(option) },
+                        text = { Text(display) },
                         onClick = {
-                            selectedSex = option
-                            expandedSexMenu = false
+                            selectedSexDisplay = display
+                            selectedSexValue   = apiValue
+                            expandedSexMenu     = false
                         }
                     )
                 }
@@ -275,10 +280,11 @@ fun CreateProfileScreen(
 
                 settingsViewModel.createUserProfile(
                     username = username,
-                    age = age,
-                    height = heightValue,
-                    weight = weightValue,
-                    goal = selectedGoal.apiValue // Используем выбранную цель
+                    age      = age,
+                    height   = heightValue,
+                    weight   = weightValue,
+                    sex      = selectedSexValue,
+                    goal     = selectedGoal.apiValue
                 )
             }
         )

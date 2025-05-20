@@ -134,7 +134,7 @@ class SettingsViewModel(
         _registerState.value = RegisterState.Idle
     }
 
-    fun createUserProfile(username: String, age: Int, height: Double, weight: Double, goal: String) {
+    fun createUserProfile(username: String, age: Int, height: Double, weight: Double, sex: String,  goal: String) {
         viewModelScope.launch {
             _createUserState.value = CreateUserState.Loading
             val request = CreateUserProfileRequest(
@@ -142,6 +142,7 @@ class SettingsViewModel(
                 age,
                 height,
                 weight,
+                sex,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")),
                 goal
             )

@@ -9,6 +9,7 @@ data class CreateUserProfileRequest(
     val age: Int,
     val height: Double,
     val weight: Double,
+    var sex: String,
     val time: String,
     val goal: String
     )
