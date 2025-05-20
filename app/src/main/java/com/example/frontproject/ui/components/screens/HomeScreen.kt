@@ -106,11 +106,13 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Статус активности
-        Text(text = "Статус активности",
+        Text(
+            text = "Статус активности",
             color = Color.Black,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            fontSize = with(LocalDensity.current) { 16.sp },)
+            fontSize = with(LocalDensity.current) { 16.sp },
+        )
         Spacer(modifier = Modifier.height(12.dp))
 
         DashboardScreen(
@@ -136,11 +138,12 @@ fun DashboardScreen(
     caloriesViewModel: CaloriesTodayViewModel,
     stepsViewModel: StepsViewModel
 ) {
-    val caloriesBurned = when (val caloriesState = caloriesViewModel.caloriesState.collectAsState().value) {
-        is ResourceState.Success -> caloriesState.data
-        is ResourceState.Loading -> 0
-        is ResourceState.Error -> 0
-    }
+    val caloriesBurned =
+        when (val caloriesState = caloriesViewModel.caloriesState.collectAsState().value) {
+            is ResourceState.Success -> caloriesState.data
+            is ResourceState.Loading -> 0
+            is ResourceState.Error -> 0
+        }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -177,7 +180,7 @@ fun CaloriesCard(
                 navController.navigate("calories")
             },
 
-    ) {
+        ) {
         Column(
             modifier = Modifier
                 .padding(16.dp)
@@ -264,18 +267,18 @@ fun StepsCard(
 ) {
     val uiState by stepsViewModel.uiState.collectAsState()
 
-    // Launcher для запроса разрешений
     val permissionsLauncher = rememberLauncherForActivityResult(
         contract = stepsViewModel.getPermissionsLaunchIntent(),
-        onResult = { grantedPermissions ->
-            Log.d("StepsCard", "Permission result: $grantedPermissions")
-            // После получения результата, перезагружаем данные
+        onResult = {
             stepsViewModel.loadStepsData()
         }
     )
 
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val cardWidth = screenWidth / 2 - 25.dp
+
+    val stepsColor1 = Color(0xFF8A6EE5)
+    val stepsColor2 = Color(0xFF674ABF)
 
     Card(
         shape = RoundedCornerShape(25.dp),
@@ -287,14 +290,14 @@ fun StepsCard(
             .size(cardWidth)
             .clickable {
                 if (uiState.healthConnectAvailability == HealthConnectAvailability.AVAILABLE && !uiState.permissionsGranted) {
-                    // Запрашиваем разрешения, если Health Connect доступен, но разрешения не даны
                     permissionsLauncher.launch(stepsViewModel.healthConnectRepository.permissions)
                 } else if (uiState.healthConnectAvailability != HealthConnectAvailability.AVAILABLE) {
-                    // TODO: Показать диалог/сообщение о том, что Health Connect не установлен/недоступен
-                    Log.w("StepsCard", "Health Connect is not available: ${uiState.healthConnectAvailability}")
+                    Log.w(
+                        "StepsCard",
+                        "Health Connect is not available: ${uiState.healthConnectAvailability}"
+                    )
                 } else {
-                    // навигация на график шагов
-                    // navController.navigate("steps_details")
+                    // TODO: навигация на график шагов
                     Log.d("StepsCard", "Navigating to steps details or other action")
                 }
             },
@@ -314,26 +317,40 @@ fun StepsCard(
             )
 
             if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-            } else if (uiState.error != null) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = stepsColor1)
+            } else if (uiState.error != null && (uiState.healthConnectAvailability != HealthConnectAvailability.AVAILABLE || !uiState.permissionsGranted)) {
                 Text(
-                    text = uiState.error!!,
-                    style = MaterialTheme.typography.bodySmall.copy(color = Color.Red, fontSize = 10.sp),
+                    text = uiState.error ?: "Нет данных",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = Color.Red,
+                        fontSize = 10.sp
+                    ),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp)
                 )
-                if (uiState.healthConnectAvailability == HealthConnectAvailability.AVAILABLE && !uiState.permissionsGranted) {
-                    Button(onClick = { permissionsLauncher.launch(stepsViewModel.healthConnectRepository.permissions) }) {
-                        Text("Дать разрешение", fontSize = 10.sp)
+                if (uiState.healthConnectAvailability == HealthConnectAvailability.AVAILABLE) {
+                    Button(
+                        onClick = { permissionsLauncher.launch(stepsViewModel.healthConnectRepository.permissions) },
+                        colors = ButtonDefaults.buttonColors(containerColor = stepsColor1)
+                    ) {
+                        Text("Дать разрешение", fontSize = 10.sp, color = Color.White)
                     }
-                }
+                } else
+                    Text(
+                        "Health Connect недоступен",
+                        fontSize = 10.sp,
+                        textAlign = TextAlign.Center
+                    )
             } else {
+                // Отображение шагов и прогресса
                 Text(
                     text = "${uiState.steps} шагов",
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight(700),
                         brush = Brush.linearGradient(
-                            colors = listOf(Color(0xFF50C878), Color(0xFF2E8B57))
+                            colors = listOf(stepsColor1, stepsColor2)
                         )
                     ),
                     modifier = Modifier.fillMaxWidth(),
@@ -343,13 +360,15 @@ fun StepsCard(
                     modifier = Modifier.size(80.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    val progress = if (uiState.goal == 0) 0f else uiState.steps.toFloat() / uiState.goal.toFloat()
+                    val progress =
+                        if (uiState.goal == 0) 0.01f else (uiState.steps.toFloat() / uiState.goal.toFloat()).coerceIn(
+                            0f,
+                            1f
+                        )
                     CircularProgressIndicator(
-                        progress = {
-                            progress.coerceIn(0f, 1f)
-                        },
+                        progress = { progress },
                         modifier = Modifier.fillMaxSize(),
-                        color = Color(0xFF50C878),
+                        color = stepsColor1,
                         strokeWidth = 8.dp,
                         strokeCap = StrokeCap.Round,
                     )
@@ -358,7 +377,7 @@ fun StepsCard(
                             .size(60.dp)
                             .background(
                                 brush = Brush.linearGradient(
-                                    colors = listOf(Color(0xFF50C878), Color(0xFF2E8B57)),
+                                    colors = listOf(stepsColor1, stepsColor2),
                                     start = Offset(Float.POSITIVE_INFINITY, 0f),
                                     end = Offset(0f, 0f)
                                 ),
@@ -367,13 +386,13 @@ fun StepsCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Цель: ${uiState.goal}",
+                            text = "Цель:\n${uiState.goal}",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color.White,
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight(500),
                                 textAlign = TextAlign.Center,
-                                lineHeight = 8.sp
+                                lineHeight = 9.sp
                             ),
                             modifier = Modifier.padding(horizontal = 4.dp)
                         )
@@ -384,7 +403,7 @@ fun StepsCard(
     }
 }
 
-        @Composable
+@Composable
 fun BmiCard(bmi: Int) {
     val bmiStatus = when {
         bmi < 16.0f -> "Вес значительно ниже нормы."
