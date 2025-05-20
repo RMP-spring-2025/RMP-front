@@ -6,5 +6,6 @@ data class UserProfileStatsResponse(
     val userId: String,
     val age: Int,
     val username: String,
-    val height: Double
+    val height: Double,
+    val sex: String,
 )
