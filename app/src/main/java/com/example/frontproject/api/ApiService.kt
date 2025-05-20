@@ -1,5 +1,6 @@
 package com.example.frontproject.api
 
+import com.example.frontproject.data.model.BzuStatsResponse
 import com.example.frontproject.data.model.product.AddProductRequest
 import com.example.frontproject.data.model.auth.AuthRequest
 import com.example.frontproject.data.model.auth.AuthResponse
@@ -74,6 +75,15 @@ interface ApiService {
         @Query("from") fromDate: String,
         @Query("to") toDate: String
     ): Response<RequestIdResponse>
+
+    @GET("user/bzu")
+    suspend fun getBzuForRange(
+        @Query("from") fromDate: String,
+        @Query("to") toDate: String
+    ): Response<RequestIdResponse>
+
+    @GET("heavy_response/{id}")
+    suspend fun getBzuResponse(@Path("id") requestId: String): Response<BzuStatsResponse>
 
     @GET("heavy_response/{id}")
     suspend fun getCaloriesResponse(@Path("id") requestId: String): Response<CaloriesStatsResponse>

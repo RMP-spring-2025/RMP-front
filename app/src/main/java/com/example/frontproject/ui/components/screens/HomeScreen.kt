@@ -56,7 +56,7 @@ import com.example.frontproject.data.repository.HealthConnectAvailability
 import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.ui.components.common.ProfileHeader
 import com.example.frontproject.ui.model.ProfileUiState
-import com.example.frontproject.ui.viewmodel.CaloriesTodayViewModel
+import com.example.frontproject.ui.viewmodel.calories.CaloriesTodayViewModel
 import com.example.frontproject.ui.viewmodel.HomeViewModel
 import com.example.frontproject.ui.viewmodel.StepsViewModel
 
@@ -86,6 +86,7 @@ fun HomeScreen(
         is ProfileUiState.Error -> 0
         is ProfileUiState.Idle -> 0
     }
+
 
     Column(
         modifier = Modifier
@@ -127,7 +128,8 @@ fun HomeScreen(
                     context.appContainer.healthConnectRepository,
                     context
                 )
-            )
+            ),
+            homeUiState
         )
     }
 }
@@ -136,8 +138,31 @@ fun HomeScreen(
 fun DashboardScreen(
     navController: NavController,
     caloriesViewModel: CaloriesTodayViewModel,
-    stepsViewModel: StepsViewModel
+    stepsViewModel: StepsViewModel,
+    homeUiState: ProfileUiState
 ) {
+    val dailyCalorieIntake =
+        when (val state = homeUiState) {
+            is ProfileUiState.Success -> {
+                val sexConf = if (state.userProfile.sex == "Female") -161 else 5
+
+                val goalConf = when (state.userProfile.goal) {
+                    "keep weight" -> 1.0
+                    "gain weight" -> 1.15
+                    "loose weight" -> 0.85
+                    else -> 1.0 // default case
+                }
+
+                ((10 * state.userProfile.weight +
+                        6.25 * state.userProfile.height -
+                        5 * state.userProfile.age +
+                        sexConf) * goalConf).toInt()
+            }
+            is ProfileUiState.Loading -> 0
+            is ProfileUiState.Error -> 0
+            ProfileUiState.Idle -> 0
+        }
+
     val caloriesBurned =
         when (val caloriesState = caloriesViewModel.caloriesState.collectAsState().value) {
             is ResourceState.Success -> caloriesState.data
@@ -151,7 +176,7 @@ fun DashboardScreen(
     ) {
         CaloriesCard(
             caloriesBurned = caloriesBurned,
-            caloriesLeft = 0,
+            caloriesLeft = dailyCalorieIntake,
             navController
         )
         StepsCard(

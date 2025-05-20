@@ -24,7 +24,7 @@ import com.example.frontproject.ui.components.calories.DailyMealsSummary
 import com.example.frontproject.ui.components.calories.MealSection
 import com.example.frontproject.ui.components.calories.MonthSelector
 import com.example.frontproject.ui.components.common.ScreenHeader
-import com.example.frontproject.ui.viewmodel.CaloriesViewModel
+import com.example.frontproject.ui.viewmodel.calories.CaloriesViewModel
 
 @Composable
 fun CaloriesScreen(

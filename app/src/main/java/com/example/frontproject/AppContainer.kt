@@ -5,6 +5,7 @@ import com.example.frontproject.api.ApiRequestExecutor
 import com.example.frontproject.api.ApiService
 import com.example.frontproject.api.AuthInterceptor
 import com.example.frontproject.api.TokenRefreshAuthenticator
+import com.example.frontproject.data.repository.BzuRepository
 import com.example.frontproject.data.repository.CaloriesRepository
 import com.example.frontproject.data.repository.HealthConnectRepositoryImpl
 import com.example.frontproject.data.repository.HealthConnectRepository
@@ -91,6 +92,10 @@ class AppContainer(context: Context) {
 
     val caloriesRepository: CaloriesRepository by lazy {
         CaloriesRepository(apiRequestExecutor, apiService)
+    }
+
+    val bzuRepository: BzuRepository by lazy {
+        BzuRepository(apiRequestExecutor, apiService)
     }
 
     val userProfileRepository: UserProfileRepository by lazy {

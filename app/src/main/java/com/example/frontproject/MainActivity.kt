@@ -45,10 +45,13 @@ import androidx.navigation.compose.rememberNavController
 import com.example.frontproject.ui.components.screens.AuthScreen
 import com.example.frontproject.ui.components.screens.BarCodeScreen
 import com.example.frontproject.ui.components.screens.CaloriesScreen
+import com.example.frontproject.ui.components.screens.CarbGraphicScreen
 import com.example.frontproject.ui.components.screens.CreateProfileScreen
+import com.example.frontproject.ui.components.screens.FatGraphicScreen
 import com.example.frontproject.ui.components.screens.GraphicsScreen
 import com.example.frontproject.ui.components.screens.HomeScreen
 import com.example.frontproject.ui.components.screens.ProfileScreen
+import com.example.frontproject.ui.components.screens.ProteinsGraphicScreen
 import com.example.frontproject.ui.components.screens.RegistrationScreen
 import com.example.frontproject.ui.components.screens.SearchScreen
 import com.example.frontproject.ui.components.screens.SettingsScreen
@@ -281,6 +284,18 @@ fun NavHostContainer(
 
             composable("calories_chart_screen") {
                 CaloriesGraphicScreen(navController)
+            }
+
+            composable("proteins_chart_screen") {
+                ProteinsGraphicScreen(navController)
+            }
+
+            composable("fats_chart_screen") {
+                FatGraphicScreen(navController)
+            }
+
+            composable("carbs_chart_screen") {
+                CarbGraphicScreen(navController)
             }
         }
     )

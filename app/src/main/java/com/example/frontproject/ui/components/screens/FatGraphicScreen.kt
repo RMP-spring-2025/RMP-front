@@ -1,3 +1,5 @@
+package com.example.frontproject.ui.components.screens
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -17,14 +19,14 @@ import co.yml.charts.ui.linechart.model.*
 import com.example.frontproject.RmpApplication
 import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.ui.components.common.ScreenHeader
-import com.example.frontproject.ui.viewmodel.calories.CaloriesHistoryViewModel
+import com.example.frontproject.ui.viewmodel.fat.FatHistoryViewModel
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun CaloriesGraphicScreen(
+fun FatGraphicScreen(
     navController: NavController
 ) {
     Column(
@@ -34,29 +36,30 @@ fun CaloriesGraphicScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         ScreenHeader(
-            title = "График калорий",
+            title = "График белков",
             onBackClick = { navController.popBackStack() },
         )
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        GraphicComponent()
+        FatGraphicComponent()
     }
 }
 
 @Composable
-fun GraphicComponent(
-    viewModel: CaloriesHistoryViewModel = viewModel(
-    factory = CaloriesHistoryViewModel.provideFactory(
-        (LocalContext.current.applicationContext as RmpApplication).appContainer.caloriesRepository
+fun FatGraphicComponent(
+    viewModel: FatHistoryViewModel = viewModel(
+        factory = FatHistoryViewModel.provideFactory(
+            (LocalContext.current.applicationContext as RmpApplication).appContainer.bzuRepository
+        )
     )
-)) {
-    val caloriesHistoryState = viewModel.caloriesHistoryState.collectAsState().value
+) {
+    val fatHistoryState = viewModel.fatHistoryState.collectAsState().value
     var selectedDays by remember { mutableStateOf(7) }
 
-    when (caloriesHistoryState) {
+    when (fatHistoryState) {
         is ResourceState.Success -> {
-            val allData = caloriesHistoryState.data
+            val allData = fatHistoryState.data
             val filteredData = allData.filter { pair ->
                 val timestamp = pair.first
                 val date = Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
@@ -194,7 +197,7 @@ fun GraphicComponent(
 
         is ResourceState.Error -> {
             Text(
-                text = "Ошибка: ${caloriesHistoryState.message}",
+                text = "Ошибка: ${fatHistoryState.message}",
                 modifier = Modifier.padding(16.dp),
                 color = Color.Red
             )

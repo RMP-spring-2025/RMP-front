@@ -1,4 +1,4 @@
-package com.example.frontproject.ui.viewmodel
+package com.example.frontproject.ui.viewmodel.calories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
