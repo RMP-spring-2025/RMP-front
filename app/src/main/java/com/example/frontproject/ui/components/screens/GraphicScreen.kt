@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -20,10 +21,15 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.frontproject.RmpApplication
+import com.example.frontproject.domain.util.ResourceState
 import com.example.frontproject.ui.components.common.GraphicsHeader
+import com.example.frontproject.ui.viewmodel.CaloriesTodayViewModel
 import kotlin.io.path.Path
 
 @Composable
@@ -61,7 +67,18 @@ fun DashboardScreenForGraphics(
 @Composable
 fun GraphicCaloriesCard(
     navController: NavController,
+    viewModel: CaloriesTodayViewModel = viewModel(
+        factory = CaloriesTodayViewModel.provideFactory(
+            (LocalContext.current.applicationContext as RmpApplication).appContainer.caloriesRepository
+        )
+    )
 ) {
+    val caloriesBurned = when (val caloriesState = viewModel.caloriesState.collectAsState().value) {
+        is ResourceState.Success -> caloriesState.data
+        is ResourceState.Loading -> 0
+        is ResourceState.Error -> 0
+    }
+
     val purple = Color(0xFFc85fee)
     val bgColor = Color(0xFFf6dffb)
 
@@ -86,7 +103,7 @@ fun GraphicCaloriesCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "1450 Ккал",
+                text = "$caloriesBurned Ккал",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight(700),
                     brush = Brush.linearGradient(
