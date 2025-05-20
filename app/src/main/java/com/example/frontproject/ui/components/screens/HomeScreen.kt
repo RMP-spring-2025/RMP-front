@@ -80,6 +80,14 @@ fun HomeScreen(
         is ProfileUiState.Error -> "Пользователь"
         is ProfileUiState.Idle -> "Пользователь"
     }
+
+    val bmiCalculated = when (val state = homeUiState) {
+        is ProfileUiState.Success -> (state.userProfile.weight / (state.userProfile.height * state.userProfile.height / 10000)).toInt()
+        is ProfileUiState.Loading -> 0
+        is ProfileUiState.Error -> 0
+        is ProfileUiState.Idle -> 0
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -95,7 +103,7 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(10.dp))
 
         // ИМТ пользователя
-        BmiCard(bmi = 35.4f) // пшеактуальное значение из ViewModel потом
+        BmiCard(bmi = bmiCalculated) // актуальное значение из ViewModel потом
         Spacer(modifier = Modifier.height(12.dp))
 
         // Статус активности
@@ -241,7 +249,7 @@ fun CaloriesCard(
 }
 
 @Composable
-fun BmiCard(bmi: Float) {
+fun BmiCard(bmi: Int) {
     val bmiStatus = when {
         bmi < 16.0f -> "Вес значительно ниже нормы."
         bmi < 18.5f -> "Вес немного ниже нормы"
@@ -329,7 +337,7 @@ fun BmiCard(bmi: Float) {
 }
 
 @Composable
-fun CutCircle(bmi: Float) {
+fun CutCircle(bmi: Int) {
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {

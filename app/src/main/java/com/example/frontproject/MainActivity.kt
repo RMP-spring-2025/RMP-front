@@ -1,5 +1,6 @@
 package com.example.frontproject
 
+import CaloriesGraphicScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -259,7 +260,7 @@ fun NavHostContainer(
             }
 
             composable("graphics") {
-                GraphicsScreen()
+                GraphicsScreen(navController)
             }
 
             composable("search") {
@@ -276,6 +277,10 @@ fun NavHostContainer(
 
             composable("settings") {
                 SettingsScreen(navController)
+            }
+
+            composable("calories_chart_screen") {
+                CaloriesGraphicScreen(navController)
             }
         }
     )
