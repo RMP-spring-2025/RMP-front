@@ -176,7 +176,7 @@ fun DashboardScreen(
     ) {
         CaloriesCard(
             caloriesBurned = caloriesBurned,
-            caloriesLeft = dailyCalorieIntake,
+            caloriesLeft = dailyCalorieIntake - caloriesBurned,
             navController
         )
         StepsCard(
