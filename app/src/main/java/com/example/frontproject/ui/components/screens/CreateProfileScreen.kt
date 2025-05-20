@@ -59,6 +59,11 @@ fun CreateProfileScreen(
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
 
+    // Добавляем выбор пола
+    val sexOptions = listOf("Мужчина", "Женщина")
+    var expandedSexMenu by remember { mutableStateOf(false) }
+    var selectedSex by remember { mutableStateOf(sexOptions[0]) }
+
     // State для DatePickerDialog
     val year = calendar.get(Calendar.YEAR)
     val month = calendar.get(Calendar.MONTH)
@@ -135,6 +140,39 @@ fun CreateProfileScreen(
                 disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        ExposedDropdownMenuBox(
+            expanded = expandedSexMenu,
+            onExpandedChange = { expandedSexMenu = !expandedSexMenu },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = selectedSex,
+                onValueChange = {},
+                label = { Text("Пол") },
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSexMenu) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = expandedSexMenu,
+                onDismissRequest = { expandedSexMenu = false }
+            ) {
+                sexOptions.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            selectedSex = option
+                            expandedSexMenu = false
+                        }
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
