@@ -28,7 +28,8 @@ class HomeViewModel(
             userProfileRepository.getUserProfileStats()
                 .catch { e ->
                     // Обработка ошибок, если сам Flow завершился с ошибкой
-                    _uiState.value = ProfileUiState.Error("Ошибка загрузки профиля: ${e.localizedMessage}")
+                    _uiState.value =
+                        ProfileUiState.Error("Ошибка загрузки профиля: ${e.localizedMessage}")
                 }
                 .collect { state ->
                     _uiState.value = state
